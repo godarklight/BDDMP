@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 using BahaTurret;
 using DarkMultiPlayer;
@@ -13,12 +12,6 @@ namespace BDDMP
 	{
 		private static BDDMPSynchronizer singleton;
 
-		//Tracking
-		public Dictionary<string, List<string>> partsDestroyed;
-
-		//State
-		private bool initialized = false;
-
 		public BDDMPSynchronizer ()
 		{
 			singleton = this;
@@ -27,8 +20,6 @@ namespace BDDMP
 		public void Awake()
 		{
 			GameObject.DontDestroyOnLoad (this);
-			partsDestroyed = new Dictionary<string, List<string>> ();
-			initialized = true;
 
             //Message Registration
             DMPModInterface.fetch.RegisterRawModHandler("HitHook", HandleHitHook);
@@ -51,7 +42,7 @@ namespace BDDMP
                 mw.Write<double> (hitPart.temperature);
                 mw.Write<double> (hitPart.externalTemperature);
 
-                DMPModInterface.fetch.SendDMPModMessage("HitHook", mw.GetMessageBytes(), false, true);
+                DMPModInterface.fetch.SendDMPModMessage("HitHook", mw.GetMessageBytes(), true, true);
             }
         }
 
@@ -67,7 +58,7 @@ namespace BDDMP
                 mw.Write<float> (bullet.normalDirection.z);
                 mw.Write<bool> (bullet.ricochet);
 
-                DMPModInterface.fetch.SendDMPModMessage("BulletHook", mw.GetMessageBytes(), false, true);
+                DMPModInterface.fetch.SendDMPModMessage("BulletHook", mw.GetMessageBytes(), true, true);
             }
 
 
@@ -89,7 +80,7 @@ namespace BDDMP
                 mw.Write<string> (explosion.explModelPath);
                 mw.Write<string> (explosion.soundPath);
 
-                DMPModInterface.fetch.SendDMPModMessage("ExplosionHook", mw.GetMessageBytes(), false, true);
+                DMPModInterface.fetch.SendDMPModMessage("ExplosionHook", mw.GetMessageBytes(), true, true);
             }
         }
 
