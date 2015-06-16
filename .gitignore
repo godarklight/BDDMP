@@ -1,8 +1,10 @@
 Assembly-CSharp.dll
 UnityEngine.dll
 BahaTurret.dll
+mscorlib.dll
+MessageWriter2.dll
+ICSharpCode.SharpZipLib.dll
+DarkMultiPlayer*
+norm*.nlp
 
-BDDMP-Server/bin/
-
-BDDMP/bin/
 BDDMP/obj/
