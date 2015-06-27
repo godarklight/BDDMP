@@ -400,6 +400,7 @@ namespace BDDMP
 
                 mw.Write<double> (Planetarium.GetUniversalTime ());
 
+
                 DMPModInterface.fetch.SendDMPModMessage ("BDDMP:BulletTracerHook", mw.GetMessageBytes (), true, true);
             }
         }
