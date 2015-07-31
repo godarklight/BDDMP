@@ -47,13 +47,13 @@ namespace BDDMP
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:DamageHook", HandleDamageHook);
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletHitFXHook", HandleBulletHitFXHook);
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
-            DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletTracerHook", HandleBulletTracerHook);
+            //DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletTracerHook", HandleBulletTracerHook);
 
             //Hook Registration
             HitManager.RegisterHitHook (DamageHook);
             HitManager.RegisterBulletHook (BulletHitFXHook);
             HitManager.RegisterExplosionHook (ExplosionFXHook);
-            HitManager.RegisterTracerHook (BulletTracerHook);
+            //HitManager.RegisterTracerHook (BulletTracerHook);
             HitManager.RegisterAllowDamageHook (VesselCanBeDamaged);
 		}
 
@@ -129,7 +129,7 @@ namespace BDDMP
                             foreach (Part part in vessel.Parts) {
                                 if (part.flightID == update.flightID) {
                                     part.temperature = update.tempurature;
-                                    part.externalTemperature = update.externalTempurature;
+                                    part.vessel.externalTemperature = update.externalTempurature;
                                 }
                             }
                         }
@@ -235,7 +235,7 @@ namespace BDDMP
                 mw.Write<string> (hitPart.vessel.id.ToString ());
                 mw.Write<uint> (hitPart.flightID);
                 mw.Write<double> (hitPart.temperature);
-                mw.Write<double> (hitPart.externalTemperature);
+                mw.Write<double> (hitPart.vessel.externalTemperature);
 
                 DMPModInterface.fetch.SendDMPModMessage("BDDMP:DamageHook", mw.GetMessageBytes(), true, true);
             }
