@@ -25,6 +25,7 @@ namespace BDDMP
         static List<BDArmoryTracerUpdate> tracerEntries = new List<BDArmoryTracerUpdate> ();
         static List<BDArmoryTurretRotUpdate> turretYawEntries = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryTurretRotUpdate> turretPitchEntries = new List<BDArmoryTurretRotUpdate>();
+        static List<BDArmoryLaserUpdate> laserEntries = new List<BDArmoryLaserUpdate>();
 
         //Update Completion Entries
         static List<BDArmoryDamageUpdate> damageEntriesCompleted = new List<BDArmoryDamageUpdate> ();
@@ -33,6 +34,7 @@ namespace BDDMP
         static List<BDArmoryTracerUpdate> tracerEntriesCompleted = new List<BDArmoryTracerUpdate> ();
         static List<BDArmoryTurretRotUpdate> turretYawEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryTurretRotUpdate> turretPitchEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
+        static List<BDArmoryLaserUpdate> laserEntriesCompleted = new List<BDArmoryLaserUpdate>();
 
         //Tracking Dictionaries
         static Dictionary<Guid, LineRenderer> tracerTracking = new Dictionary<Guid, LineRenderer> ();
@@ -54,6 +56,7 @@ namespace BDDMP
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretYawHook", HandleTurretYawHook);
             //DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletTracerHook", HandleBulletTracerHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:LaserHook", HandleLaserHook);
 
             //Hook Registration
             HitManager.RegisterHitHook (DamageHook);
@@ -62,6 +65,7 @@ namespace BDDMP
             HitManager.RegisterTurretYawHook(TurretYawHook);
             HitManager.RegisterTurretPitchHook(TurretPitchHook);
             //HitManager.RegisterTracerHook (BulletTracerHook);
+            HitManager.RegisterLaserHook(LaserHook);
             HitManager.RegisterAllowDamageHook (VesselCanBeDamaged);
 		}
 
@@ -75,6 +79,7 @@ namespace BDDMP
             UpdateTracer ();
             UpdateTurretYaw ();
             UpdateTurretPitch ();
+            UpdateLaser ();
         }
 
 
@@ -150,10 +155,26 @@ namespace BDDMP
                 }
             }
 
+            foreach (BDArmoryLaserUpdate update in laserEntriesCompleted)
+            {
+                laserEntries.Remove(update);
+            }
+            foreach (BDArmoryLaserUpdate update in laserEntries)
+            {
+                //If update is older than 3 seconds, purge it
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    laserEntries.Remove(update);
+                }
+            }
+
             damageEntriesCompleted.Clear ();
             bulletHitEntriesCompleted.Clear ();
             explosionEntriesCompleted.Clear ();
             tracerEntriesCompleted.Clear ();
+            turretYawEntriesCompleted.Clear ();
+            turretPitchEntriesCompleted.Clear ();
+            laserEntriesCompleted.Clear();
         }
 
         private void UpdateDamage()
@@ -272,13 +293,13 @@ namespace BDDMP
                     {
                         if (v.id == update.vesselID)
                         {
-                            DarkLog.Debug("YAW: Found Targer Vessel");
+                            //DarkLog.Debug("YAW: Found Target Vessel");
                             foreach (Part p in v.Parts.ToArray())
                             {
                                 if (p.craftID == update.turretID)
                                 {
                                     p.GetComponent<BahaTurret.BahaTurret>().yawTransform.localRotation *= update.rot;
-                                    DarkLog.Debug("YAW: Found And Changed Turret");
+                                    //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
                             }
@@ -303,13 +324,13 @@ namespace BDDMP
                     {
                         if (v.id == update.vesselID)
                         {
-                            DarkLog.Debug("PITCH: Found Targer Vessel");
+                            //DarkLog.Debug("PITCH: Found Target Vessel");
                             foreach (Part p in v.Parts.ToArray())
                             {
                                 if (p.craftID == update.turretID)
                                 {
                                     p.GetComponent<BahaTurret.BahaTurret>().pitchTransform.localRotation *= update.rot;
-                                    DarkLog.Debug("PITCH: Found And Changed Turret");
+                                    //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
                             }
@@ -319,12 +340,47 @@ namespace BDDMP
                     turretPitchEntriesCompleted.Add(update);
                 }
             }
+        }
 
+        private void UpdateLaser()
+        {
+            //Iterate over updates
+            foreach (BDArmoryLaserUpdate update in laserEntries)
+            {
+                //Don't apply updates till they happen
+                if (ApplyUpdate<BDArmoryLaserUpdate>(update))
+                {
+                    foreach (Vessel v in FlightGlobals.Vessels.ToArray())
+                    {
+                        if (v.id == update.vesselID)
+                        {
+                            DarkLog.Debug("LASER: Found Target Vessel");
+                            foreach (Part p in v.Parts.ToArray())
+                            {
+                                if (p.craftID == update.turretID)
+                                {
+                                    foreach (Transform tf in p.FindModelTransforms("fireTransform"))
+                                    {
+                                        LineRenderer lr = tf.gameObject.GetComponent<LineRenderer>();
+                                        lr.SetPosition(0, update.p1 + tf.position);
+                                        lr.SetPosition(1, update.p2 + tf.position);
+                                    }
+                                    DarkLog.Debug("LASER: Found And Changed Turret");
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    laserEntriesCompleted.Add(update);
+                }
+            }
         }
 
         #endregion
 
         #region Network Code
+
         #region Damage
         void DamageHook(Part hitPart)
         {
@@ -600,6 +656,59 @@ namespace BDDMP
 
         #endregion
 
+        #region Turret Pitch
+
+        void LaserHook(Vector3 p1, Vector3 p2, Guid vesselID, uint turretID)
+        {
+            using (MessageWriter mw = new MessageWriter())
+            {
+                mw.Write<double>(Planetarium.GetUniversalTime());
+
+                mw.Write<float>(p1.x);
+                mw.Write<float>(p1.y);
+                mw.Write<float>(p1.z);
+
+                mw.Write<float>(p2.x);
+                mw.Write<float>(p2.y);
+                mw.Write<float>(p2.z);
+
+                mw.Write<string>(vesselID.ToString());
+
+                mw.Write<uint>(turretID);
+
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:LaserHook", mw.GetMessageBytes(), true, true);
+            }
+        }
+
+        void HandleLaserHook(byte[] messageData)
+        {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                double timeStamp = mr.Read<double>();
+
+                float x = mr.Read<float>();
+                float y = mr.Read<float>();
+                float z = mr.Read<float>();
+
+                Vector3 p1 = new Vector3(x, y, z);
+
+                x = mr.Read<float>();
+                y = mr.Read<float>();
+                z = mr.Read<float>();
+
+                Vector3 p2 = new Vector3(x, y, z);
+
+                Guid vesselID = new Guid(mr.Read<string>());
+
+                uint turretID = mr.Read<uint>();
+
+                BDArmoryLaserUpdate update = new BDArmoryLaserUpdate(timeStamp, p1, p2, vesselID, turretID);
+                laserEntries.Add(update);
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Utility Functions
@@ -710,6 +819,22 @@ namespace BDDMP
         {
             this.entryTime = entryTime;
             this.rot = rotation;
+            this.vesselID = vesselID;
+            this.turretID = turretID;
+        }
+    }
+
+    public class BDArmoryLaserUpdate : BDArmoryUpdate
+    {
+        public readonly Vector3 p1, p2;
+        public readonly Guid vesselID;
+        public readonly uint turretID;
+
+        public BDArmoryLaserUpdate(double entryTime, Vector3 p1, Vector3 p2, Guid vesselID, uint turretID)
+        {
+            this.entryTime = entryTime;
+            this.p1 = p1;
+            this.p2 = p2;
             this.vesselID = vesselID;
             this.turretID = turretID;
         }
