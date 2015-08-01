@@ -23,12 +23,16 @@ namespace BDDMP
         static List<BDArmoryBulletHitUpdate> bulletHitEntries = new List<BDArmoryBulletHitUpdate> ();
         static List<BDArmoryExplosionUpdate> explosionEntries = new List<BDArmoryExplosionUpdate> ();
         static List<BDArmoryTracerUpdate> tracerEntries = new List<BDArmoryTracerUpdate> ();
+        static List<BDArmoryTurretRotUpdate> turretYawEntries = new List<BDArmoryTurretRotUpdate>();
+        static List<BDArmoryTurretRotUpdate> turretPitchEntries = new List<BDArmoryTurretRotUpdate>();
 
         //Update Completion Entries
         static List<BDArmoryDamageUpdate> damageEntriesCompleted = new List<BDArmoryDamageUpdate> ();
         static List<BDArmoryBulletHitUpdate> bulletHitEntriesCompleted = new List<BDArmoryBulletHitUpdate> ();
         static List<BDArmoryExplosionUpdate> explosionEntriesCompleted = new List<BDArmoryExplosionUpdate> ();
         static List<BDArmoryTracerUpdate> tracerEntriesCompleted = new List<BDArmoryTracerUpdate> ();
+        static List<BDArmoryTurretRotUpdate> turretYawEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
+        static List<BDArmoryTurretRotUpdate> turretPitchEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
 
         //Tracking Dictionaries
         static Dictionary<Guid, LineRenderer> tracerTracking = new Dictionary<Guid, LineRenderer> ();
@@ -47,12 +51,16 @@ namespace BDDMP
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:DamageHook", HandleDamageHook);
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletHitFXHook", HandleBulletHitFXHook);
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretYawHook", HandleTurretYawHook);
             //DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletTracerHook", HandleBulletTracerHook);
 
             //Hook Registration
             HitManager.RegisterHitHook (DamageHook);
             HitManager.RegisterBulletHook (BulletHitFXHook);
             HitManager.RegisterExplosionHook (ExplosionFXHook);
+            HitManager.RegisterTurretYawHook(TurretYawHook);
+            HitManager.RegisterTurretPitchHook(TurretPitchHook);
             //HitManager.RegisterTracerHook (BulletTracerHook);
             HitManager.RegisterAllowDamageHook (VesselCanBeDamaged);
 		}
@@ -65,6 +73,8 @@ namespace BDDMP
             UpdateBulletHit ();
             UpdateExplosion ();
             UpdateTracer ();
+            UpdateTurretYaw ();
+            UpdateTurretPitch ();
         }
 
 
@@ -109,6 +119,34 @@ namespace BDDMP
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime () - update.entryTime > updateHistoryMinutesToLive * 60) {
                     tracerEntries.Remove (update);
+                }
+            }
+
+
+            foreach (BDArmoryTurretRotUpdate update in turretYawEntriesCompleted)
+            {
+                turretYawEntries.Remove(update);
+            }
+            foreach (BDArmoryTurretRotUpdate update in turretYawEntries)
+            {
+                //If update is older than 3 seconds, purge it
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    turretYawEntries.Remove(update);
+                }
+            }
+
+
+            foreach (BDArmoryTurretRotUpdate update in turretPitchEntriesCompleted)
+            {
+                turretPitchEntries.Remove(update);
+            }
+            foreach (BDArmoryTurretRotUpdate update in turretPitchEntries)
+            {
+                //If update is older than 3 seconds, purge it
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    turretPitchEntries.Remove(update);
                 }
             }
 
@@ -222,8 +260,69 @@ namespace BDDMP
 
         }
 
-        #endregion
+        private void UpdateTurretYaw()
+        {
+            //Iterate over updates
+            foreach (BDArmoryTurretRotUpdate update in turretYawEntries)
+            {
+                //Don't apply updates till they happen
+                if (ApplyUpdate<BDArmoryTurretRotUpdate>(update))
+                {
+                    foreach (Vessel v in FlightGlobals.Vessels.ToArray())
+                    {
+                        if (v.id == update.vesselID)
+                        {
+                            DarkLog.Debug("YAW: Found Targer Vessel");
+                            foreach (Part p in v.Parts.ToArray())
+                            {
+                                if (p.craftID == update.turretID)
+                                {
+                                    p.GetComponent<BahaTurret.BahaTurret>().yawTransform.localRotation *= update.rot;
+                                    DarkLog.Debug("YAW: Found And Changed Turret");
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    turretYawEntriesCompleted.Add(update);
+                }
+            }
 
+        }
+
+        private void UpdateTurretPitch()
+        {
+            //Iterate over updates
+            foreach (BDArmoryTurretRotUpdate update in turretPitchEntries)
+            {
+                //Don't apply updates till they happen
+                if (ApplyUpdate<BDArmoryTurretRotUpdate>(update))
+                {
+                    foreach (Vessel v in FlightGlobals.Vessels.ToArray())
+                    {
+                        if (v.id == update.vesselID)
+                        {
+                            DarkLog.Debug("PITCH: Found Targer Vessel");
+                            foreach (Part p in v.Parts.ToArray())
+                            {
+                                if (p.craftID == update.turretID)
+                                {
+                                    p.GetComponent<BahaTurret.BahaTurret>().pitchTransform.localRotation *= update.rot;
+                                    DarkLog.Debug("PITCH: Found And Changed Turret");
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    turretPitchEntriesCompleted.Add(update);
+                }
+            }
+
+        }
+
+        #endregion
 
         #region Network Code
         #region Damage
@@ -413,10 +512,93 @@ namespace BDDMP
         }
         #endregion
 
+        #region Turret Yaw
 
+        void TurretYawHook(Quaternion rot, Guid vesselID, uint turretID) {
+            using (MessageWriter mw = new MessageWriter())
+            {
+                mw.Write<double>(Planetarium.GetUniversalTime());
 
+                mw.Write<float>(rot.x);
+                mw.Write<float>(rot.y);
+                mw.Write<float>(rot.z);
+                mw.Write<float>(rot.w);
 
+                mw.Write<string>(vesselID.ToString());
 
+                mw.Write<uint>(turretID);
+
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretYawHook", mw.GetMessageBytes(), true, true);
+            }
+        }
+
+        void HandleTurretYawHook(byte[] messageData) {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                double timeStamp = mr.Read<double>();
+
+                float x = mr.Read<float>();
+                float y = mr.Read<float>();
+                float z = mr.Read<float>();
+                float w = mr.Read<float>();
+
+                Quaternion rot = new Quaternion(x, y, z, w);
+
+                Guid vesselID = new Guid(mr.Read<string>());
+
+                uint turretID = mr.Read<uint>();
+
+                BDArmoryTurretRotUpdate update = new BDArmoryTurretRotUpdate(timeStamp, rot, vesselID, turretID);
+                turretYawEntries.Add(update);
+            }
+        }
+
+        #endregion
+
+        #region Turret Pitch
+
+        void TurretPitchHook(Quaternion rot, Guid vesselID, uint turretID)
+        {
+            using (MessageWriter mw = new MessageWriter())
+            {
+                mw.Write<double>(Planetarium.GetUniversalTime());
+
+                mw.Write<float>(rot.x);
+                mw.Write<float>(rot.y);
+                mw.Write<float>(rot.z);
+                mw.Write<float>(rot.w);
+
+                mw.Write<string>(vesselID.ToString());
+
+                mw.Write<uint>(turretID);
+
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretPitchHook", mw.GetMessageBytes(), true, true);
+            }
+        }
+
+        void HandleTurretPitchHook(byte[] messageData)
+        {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                double timeStamp = mr.Read<double>();
+
+                float x = mr.Read<float>();
+                float y = mr.Read<float>();
+                float z = mr.Read<float>();
+                float w = mr.Read<float>();
+
+                Quaternion rot = new Quaternion(x, y, z, w);
+
+                Guid vesselID = new Guid(mr.Read<string>());
+
+                uint turretID = mr.Read<uint>();
+
+                BDArmoryTurretRotUpdate update = new BDArmoryTurretRotUpdate(timeStamp, rot, vesselID, turretID);
+                turretPitchEntries.Add(update);
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -445,6 +627,7 @@ namespace BDDMP
     {
         public double entryTime;
     }
+
     public class BDArmoryDamageUpdate : BDArmoryUpdate
     {
         public readonly Guid vesselID;
@@ -461,6 +644,7 @@ namespace BDDMP
             this.externalTempurature = externalTempurature;
         }
     }
+
     public class BDArmoryBulletHitUpdate : BDArmoryUpdate
     {
         public readonly Guid vesselOriginID;
@@ -477,6 +661,7 @@ namespace BDDMP
             this.ricochet = ricochet;
         }
     }
+
     public class BDArmoryExplosionUpdate : BDArmoryUpdate
     {
         public readonly Vector3 position;
@@ -512,6 +697,21 @@ namespace BDDMP
             this.position = position;
             this.vesselOriginID = vesselOriginID;
             this.objectID = objectID;
+        }
+    }
+
+    public class BDArmoryTurretRotUpdate : BDArmoryUpdate
+    {
+        public readonly Quaternion rot;
+        public readonly Guid vesselID;
+        public readonly uint turretID;
+
+        public BDArmoryTurretRotUpdate(double entryTime, Quaternion rotation, Guid vesselID, uint turretID)
+        {
+            this.entryTime = entryTime;
+            this.rot = rotation;
+            this.vesselID = vesselID;
+            this.turretID = turretID;
         }
     }
 }
