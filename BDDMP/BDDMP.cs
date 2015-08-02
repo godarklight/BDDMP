@@ -58,9 +58,9 @@ namespace BDDMP
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretYawHook", HandleTurretYawHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerInitHook", HandleBulletTracerHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerInitHook", HandleBulletTracerInitHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerHook", HandleBulletTracerHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerDestroyHook", HandleBulletTracerHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerDestroyHook", HandleBulletTracerDestroyHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:LaserHook", HandleLaserHook);
 
             //Hook Registration
@@ -199,6 +199,16 @@ namespace BDDMP
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
                     laserEntries.Remove(update);
+                }
+            }
+
+            //Cull all desynced Tracers 
+            foreach (BDArmouryTracer tracer in tracers.ToArray())
+            {
+                if (Planetarium.GetUniversalTime() - tracer.initTime > 20)
+                {
+                    GameObject.Destroy(tracer.tracer);
+                    tracers.Remove(tracer);
                 }
             }
 
@@ -370,6 +380,9 @@ namespace BDDMP
                             lr.SetPosition(1, update.p2 + tracer.offset);
                             lr.material.SetColor("_TintColor", update.color);
                             lr.SetWidth(update.w1, update.w2);
+
+                            Light light = tracer.tracer.GetComponent<Light>();
+                            light.transform.position = update.p1 + tracer.offset;
                         }
                     }
 
