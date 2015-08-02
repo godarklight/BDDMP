@@ -298,7 +298,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<BahaTurret.BahaTurret>().yawTransform.localRotation *= update.rot;
+                                    p.GetComponent<BahaTurret.BahaTurret>().yawTransform.localRotation = update.rot;
                                     //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
@@ -329,7 +329,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<BahaTurret.BahaTurret>().pitchTransform.localRotation *= update.rot;
+                                    p.GetComponent<BahaTurret.BahaTurret>().pitchTransform.localRotation = update.rot;
                                     //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
@@ -363,7 +363,7 @@ namespace BDDMP
                                     {
                                         LineRenderer lr = tf.gameObject.GetComponent<LineRenderer>();
                                         lr.SetPosition(0, update.p1 + tf.position);
-                                        lr.SetPosition(1, update.p2 + tf.position);
+                                        lr.SetPosition(1, update.p2 + v.gameObject.transform.position);
                                     }
                                     DarkLog.Debug("LASER: Found And Changed Turret");
                                     break;
@@ -656,7 +656,7 @@ namespace BDDMP
 
         #endregion
 
-        #region Turret Pitch
+        #region Laser
 
         void LaserHook(Vector3 p1, Vector3 p2, Guid vesselID, uint turretID)
         {
@@ -827,6 +827,7 @@ namespace BDDMP
     public class BDArmoryLaserUpdate : BDArmoryUpdate
     {
         public readonly Vector3 p1, p2;
+        public readonly bool rayCast;
         public readonly Guid vesselID;
         public readonly uint turretID;
 
