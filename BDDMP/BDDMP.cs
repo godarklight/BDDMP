@@ -22,7 +22,9 @@ namespace BDDMP
         static List<BDArmoryDamageUpdate> damageEntries = new List<BDArmoryDamageUpdate> ();
         static List<BDArmoryBulletHitUpdate> bulletHitEntries = new List<BDArmoryBulletHitUpdate> ();
         static List<BDArmoryExplosionUpdate> explosionEntries = new List<BDArmoryExplosionUpdate> ();
+        static List<BDArmoryTracerInitUpdate> tracerInitEntries = new List<BDArmoryTracerInitUpdate>();
         static List<BDArmoryTracerUpdate> tracerEntries = new List<BDArmoryTracerUpdate> ();
+        static List<BDArmoryTracerDestroyUpdate> tracerDestroyEntries = new List<BDArmoryTracerDestroyUpdate>();
         static List<BDArmoryTurretRotUpdate> turretYawEntries = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryTurretRotUpdate> turretPitchEntries = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryLaserUpdate> laserEntries = new List<BDArmoryLaserUpdate>();
@@ -31,14 +33,15 @@ namespace BDDMP
         static List<BDArmoryDamageUpdate> damageEntriesCompleted = new List<BDArmoryDamageUpdate> ();
         static List<BDArmoryBulletHitUpdate> bulletHitEntriesCompleted = new List<BDArmoryBulletHitUpdate> ();
         static List<BDArmoryExplosionUpdate> explosionEntriesCompleted = new List<BDArmoryExplosionUpdate> ();
-        static List<BDArmoryTracerUpdate> tracerEntriesCompleted = new List<BDArmoryTracerUpdate> ();
+        static List<BDArmoryTracerInitUpdate> tracerInitEntriesCompleted = new List<BDArmoryTracerInitUpdate>();
+        static List<BDArmoryTracerUpdate> tracerEntriesCompleted = new List<BDArmoryTracerUpdate>();
+        static List<BDArmoryTracerDestroyUpdate> tracerDestroyEntriesCompleted = new List<BDArmoryTracerDestroyUpdate>();
         static List<BDArmoryTurretRotUpdate> turretYawEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryTurretRotUpdate> turretPitchEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryLaserUpdate> laserEntriesCompleted = new List<BDArmoryLaserUpdate>();
 
-        //Tracking Dictionaries
-        static Dictionary<Guid, LineRenderer> tracerTracking = new Dictionary<Guid, LineRenderer> ();
-        static Dictionary<int, Guid> tracerIDs = new Dictionary<int, Guid> ();
+        //Tracers
+        static List<BDArmouryTracer> tracers = new List<BDArmouryTracer>();
 
 		public BDDMPSynchronizer ()
 		{
@@ -55,7 +58,9 @@ namespace BDDMP
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretYawHook", HandleTurretYawHook);
-            //DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletTracerHook", HandleBulletTracerHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerInitHook", HandleBulletTracerHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerHook", HandleBulletTracerHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerDestroyHook", HandleBulletTracerHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:LaserHook", HandleLaserHook);
 
             //Hook Registration
@@ -64,7 +69,9 @@ namespace BDDMP
             HitManager.RegisterExplosionHook (ExplosionFXHook);
             HitManager.RegisterTurretYawHook(TurretYawHook);
             HitManager.RegisterTurretPitchHook(TurretPitchHook);
-            //HitManager.RegisterTracerHook (BulletTracerHook);
+            HitManager.RegisterTracerInitHook(BulletTracerInitHook);
+            HitManager.RegisterTracerHook (BulletTracerHook);
+            HitManager.RegisterTracerDestroyHook(BulletTracerDestroyHook);
             HitManager.RegisterLaserHook(LaserHook);
             HitManager.RegisterAllowDamageHook (VesselCanBeDamaged);
 		}
@@ -76,7 +83,9 @@ namespace BDDMP
             UpdateDamage ();
             UpdateBulletHit ();
             UpdateExplosion ();
+            UpdateTracerInit ();
             UpdateTracer ();
+            UpdateTracerDestroy ();
             UpdateTurretYaw ();
             UpdateTurretPitch ();
             UpdateLaser ();
@@ -117,6 +126,19 @@ namespace BDDMP
                 }
             }
 
+            foreach (BDArmoryTracerInitUpdate update in tracerInitEntriesCompleted)
+            {
+                tracerInitEntries.Remove(update);
+            }
+            foreach (BDArmoryTracerInitUpdate update in tracerInitEntries)
+            {
+                //If update is older than 3 seconds, purge it
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    tracerInitEntries.Remove(update);
+                }
+            }
+
             foreach (BDArmoryTracerUpdate update in tracerEntriesCompleted) {
                 tracerEntries.Remove (update);
             }
@@ -127,6 +149,18 @@ namespace BDDMP
                 }
             }
 
+            foreach (BDArmoryTracerDestroyUpdate update in tracerDestroyEntriesCompleted)
+            {
+                tracerDestroyEntries.Remove(update);
+            }
+            foreach (BDArmoryTracerDestroyUpdate update in tracerDestroyEntries)
+            {
+                //If update is older than 3 seconds, purge it
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    tracerDestroyEntries.Remove(update);
+                }
+            }
 
             foreach (BDArmoryTurretRotUpdate update in turretYawEntriesCompleted)
             {
@@ -171,7 +205,9 @@ namespace BDDMP
             damageEntriesCompleted.Clear ();
             bulletHitEntriesCompleted.Clear ();
             explosionEntriesCompleted.Clear ();
+            tracerInitEntriesCompleted.Clear ();
             tracerEntriesCompleted.Clear ();
+            tracerDestroyEntriesCompleted.Clear ();
             turretYawEntriesCompleted.Clear ();
             turretPitchEntriesCompleted.Clear ();
             laserEntriesCompleted.Clear();
@@ -268,14 +304,97 @@ namespace BDDMP
             }
         }
 
+        private void UpdateTracerInit()
+        {
+            //Iterate over updates
+            foreach (BDArmoryTracerInitUpdate update in tracerInitEntries) {
+                //Don't apply updates till they happen
+                if (ApplyUpdate<BDArmoryTracerInitUpdate> (update)) {
+
+                    BDArmouryTracer tracer = new BDArmouryTracer();
+
+                    tracer.id = update.tracerID;
+                    tracer.initTime = Planetarium.GetUniversalTime();
+
+                    foreach (Vessel v in FlightGlobals.Vessels.ToArray())
+                    {
+                        if (v.id == update.vesselID)
+                        {
+                            DarkLog.Debug("LASER: Found Target Vessel");
+                            foreach (Part p in v.Parts.ToArray())
+                            {
+                                if (p.craftID == update.partID)
+                                {
+                                    tracer.offset = p.transform.position;
+                                }
+                            }
+                        }
+                    }
+
+                    tracer.tracer = new GameObject();
+                    
+                    Light light = tracer.tracer.AddComponent<Light>();
+                    light.type = LightType.Point;
+                    light.color = Misc.ParseColor255("255, 235, 145, 255");
+                    light.range = 8;
+                    light.intensity = 1;
+
+                    LineRenderer lr = tracer.tracer.AddComponent<LineRenderer>();
+                    lr.SetVertexCount(2);
+                    lr.material = new Material(Shader.Find("KSP/Particles/Alpha Blended"));
+                    lr.material.mainTexture = GameDatabase.Instance.GetTexture(update.bulletTexPath, false);
+
+                    tracers.Add(tracer);
+
+                    tracerInitEntriesCompleted.Add (update);
+                }
+            }
+
+        }
+
         private void UpdateTracer()
         {
             //Iterate over updates
-            foreach (BDArmoryTracerUpdate update in tracerEntries) {
+            foreach (BDArmoryTracerUpdate update in tracerEntries)
+            {
                 //Don't apply updates till they happen
-                if (ApplyUpdate<BDArmoryTracerUpdate> (update)) {
+                if (ApplyUpdate<BDArmoryTracerUpdate>(update))
+                {
 
-                    tracerEntriesCompleted.Add (update);
+                    foreach (BDArmouryTracer tracer in tracers)
+                    {
+                        if (tracer.id == update.tracerID)
+                        {
+                            LineRenderer lr = tracer.tracer.GetComponent<LineRenderer>();
+                            lr.SetPosition(0, update.p1 + tracer.offset);
+                            lr.SetPosition(1, update.p2 + tracer.offset);
+                            lr.material.SetColor("_TintColor", update.color);
+                            lr.SetWidth(update.w1, update.w2);
+                        }
+                    }
+
+                    tracerEntriesCompleted.Add(update);
+                }
+            }
+
+        }
+
+        private void UpdateTracerDestroy()
+        {
+            //Iterate over updates
+            foreach (BDArmoryTracerDestroyUpdate update in tracerDestroyEntries)
+            {
+                //Don't apply updates till they happen
+                if (ApplyUpdate<BDArmoryTracerDestroyUpdate>(update))
+                {
+                    foreach (BDArmouryTracer tracer in tracers.ToArray())
+                    {
+                        if (tracer.id == update.tracerID) {
+                            tracers.Remove(tracer);
+                        }
+                    }
+
+                    tracerDestroyEntriesCompleted.Add(update);
                 }
             }
 
@@ -359,6 +478,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
+                                    //TODO Add Sound
                                     foreach (Transform tf in p.FindModelTransforms("fireTransform"))
                                     {
                                         LineRenderer lr = tf.gameObject.GetComponent<LineRenderer>();
@@ -548,24 +668,131 @@ namespace BDDMP
         }
         #endregion
 
-        #region Tracer FX
-        void BulletTracerHook(BahaTurretBullet bullet)
+        #region Tracer FX All
+
+        #region Tracer Init
+
+        void BulletTracerInitHook(InitTracerObject bullet)
         {
             using (MessageWriter mw = new MessageWriter ()) {
 
                 mw.Write<double> (Planetarium.GetUniversalTime ());
 
+                mw.Write<string>(bullet.tracerID.ToString());
+                mw.Write<string>(bullet.vesselID.ToString());
+                mw.Write<uint>(bullet.turretID);
+                mw.Write<string>(bullet.bulletTexPath);
 
-                DMPModInterface.fetch.SendDMPModMessage ("BDDMP:BulletTracerHook", mw.GetMessageBytes (), true, true);
+                DMPModInterface.fetch.SendDMPModMessage ("BDDMP:BulletTracerInitHook", mw.GetMessageBytes (), true, true);
+            }
+        }
+
+        void HandleBulletTracerInitHook(byte[] messageData)
+        {
+            using (MessageReader mr = new MessageReader (messageData)) {
+                double timeStamp = mr.Read<double>();
+
+                Guid tracerID = new Guid(mr.Read<string>());
+                Guid vesselID = new Guid(mr.Read<string>());
+                uint turretID = mr.Read<uint>();
+                string bulletTexPath = mr.Read<string>();
+
+                BDArmoryTracerInitUpdate update = new BDArmoryTracerInitUpdate(timeStamp, bulletTexPath, tracerID, vesselID, turretID);
+                tracerInitEntries.Add(update);
+            }
+        }
+        #endregion
+
+        #region Tracer Update
+        void BulletTracerHook(UpdateTracerObject bullet)
+        {
+            using (MessageWriter mw = new MessageWriter())
+            {
+
+                mw.Write<double>(Planetarium.GetUniversalTime());
+
+                mw.Write<float>(bullet.p1.x);
+                mw.Write<float>(bullet.p1.y);
+                mw.Write<float>(bullet.p1.z);
+
+                mw.Write<float>(bullet.p2.x);
+                mw.Write<float>(bullet.p2.y);
+                mw.Write<float>(bullet.p2.z);
+
+                mw.Write<float>(bullet.color.r);
+                mw.Write<float>(bullet.color.g);
+                mw.Write<float>(bullet.color.b);
+                mw.Write<float>(bullet.color.a);
+
+                mw.Write<float>(bullet.width1);
+                mw.Write<float>(bullet.width2);
+
+                mw.Write<string>(bullet.tracerID.ToString());
+
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:BulletTracerHook", mw.GetMessageBytes(), true, true);
             }
         }
 
         void HandleBulletTracerHook(byte[] messageData)
         {
-            using (MessageReader mr = new MessageReader (messageData)) {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                // Using least var creation
+                double timeStamp = mr.Read<double>();
 
+                float x = mr.Read<float>();
+                float y = mr.Read<float>();
+                float z = mr.Read<float>();
+                Vector3 p1 = new Vector3(x, y, z);
+
+                x = mr.Read<float>();
+                y = mr.Read<float>();
+                z = mr.Read<float>();
+                Vector3 p2 = new Vector3(x, y, z);
+                
+                x = mr.Read<float>();
+                y = mr.Read<float>();
+                z = mr.Read<float>();
+                float w = mr.Read<float>();
+                Color color = new Color(x, y, z, w);
+
+                w = mr.Read<float>();
+                float w2 = mr.Read<float>();
+
+                Guid tracer = new Guid(mr.Read<string>());
+
+                BDArmoryTracerUpdate update = new BDArmoryTracerUpdate(timeStamp, p1, p2, color, w, w2, tracer);
+                tracerEntries.Add(update);
             }
         }
+        #endregion
+
+        #region Tracer Destroy
+        void BulletTracerDestroyHook(Guid bullet)
+        {
+            using (MessageWriter mw = new MessageWriter())
+            {
+
+                mw.Write<double>(Planetarium.GetUniversalTime());
+                mw.Write<string>(bullet.ToString());
+
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:BulletTracerDestroyHook", mw.GetMessageBytes(), true, true);
+            }
+        }
+
+        void HandleBulletTracerDestroyHook(byte[] messageData)
+        {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                double timeStamp = mr.Read<double>();
+                Guid tracer = new Guid(mr.Read<string>());
+
+                BDArmoryTracerDestroyUpdate update = new BDArmoryTracerDestroyUpdate(timeStamp, tracer);
+                tracerDestroyEntries.Add(update);
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Turret Yaw
@@ -732,6 +959,8 @@ namespace BDDMP
         #endregion
 	}
 
+    #region BDA Update Classes
+
     public class BDArmoryUpdate
     {
         public double entryTime;
@@ -794,18 +1023,50 @@ namespace BDDMP
         }
     }
 
-    public class BDArmoryTracerUpdate : BDArmoryUpdate
+    public class BDArmoryTracerInitUpdate : BDArmoryUpdate
     {
-        public readonly Vector3 position;
-        public readonly Guid vesselOriginID;
-        public readonly Guid objectID;
+        public readonly Guid vesselID;
+        public readonly Guid tracerID;
+        public readonly uint partID;
+        public readonly string bulletTexPath;
 
-        public BDArmoryTracerUpdate(double entryTime, Vector3 position, Guid vesselOriginID, Guid objectID)
+        public BDArmoryTracerInitUpdate(double entryTime, string bulletTexPath, Guid tracerID, Guid vesselID, uint partID)
         {
             this.entryTime = entryTime;
-            this.position = position;
-            this.vesselOriginID = vesselOriginID;
-            this.objectID = objectID;
+            this.bulletTexPath = bulletTexPath;
+            this.tracerID = tracerID;
+            this.vesselID = vesselID;
+            this.partID = partID;
+        }
+    }
+
+    public class BDArmoryTracerUpdate : BDArmoryUpdate
+    {
+        public readonly Vector3 p1, p2;
+        public readonly Color color;
+        public readonly float w1, w2;
+        public readonly Guid tracerID;
+
+        public BDArmoryTracerUpdate(double entryTime, Vector3 p1, Vector3 p2, Color newColor, float width1, float width2, Guid tracerID)
+        {
+            this.entryTime = entryTime;
+            this.p1 = p1;
+            this.p2 = p2;
+            this.color = newColor;
+            this.w1 = width1;
+            this.w2 = width2;
+            this.tracerID = tracerID;
+        }
+    }
+
+    public class BDArmoryTracerDestroyUpdate : BDArmoryUpdate
+    {
+        public readonly Guid tracerID;
+
+        public BDArmoryTracerDestroyUpdate(double entryTime, Guid tracerID)
+        {
+            this.entryTime = entryTime;
+            this.tracerID = tracerID;
         }
     }
 
@@ -839,6 +1100,16 @@ namespace BDDMP
             this.vesselID = vesselID;
             this.turretID = turretID;
         }
+    }
+
+    #endregion
+
+    public class BDArmouryTracer
+    {
+        public double initTime;
+        public Guid id;
+        public Vector3 offset;
+        public GameObject tracer;
     }
 }
 
