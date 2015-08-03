@@ -16,6 +16,11 @@ namespace BDDMP
         const int syncFXHz = 40;
         static float lastFXSync = 0;
         static int tickCount = 0;
+
+        const int syncTurretHz = 30;
+        static float lastTurretsync = 0;
+        static int turretTickCount = 0;
+
         const int updateHistoryMinutesToLive = 3;
 
         //Update Entries
@@ -205,9 +210,16 @@ namespace BDDMP
             //Cull all desynced Tracers 
             foreach (BDArmouryTracer tracer in tracers.ToArray())
             {
-                if (Planetarium.GetUniversalTime() - tracer.initTime > 20)
+                try
                 {
-                    GameObject.Destroy(tracer.tracer);
+                    if (Planetarium.GetUniversalTime() - tracer.initTime > 60)
+                    {
+                        tracers.Remove(tracer);
+                        GameObject.Destroy(tracer.tracer);
+                    }
+                }
+                catch (NullReferenceException)
+                {
                     tracers.Remove(tracer);
                 }
             }
@@ -404,6 +416,7 @@ namespace BDDMP
                     {
                         if (tracer.id == update.tracerID) {
                             tracers.Remove(tracer);
+                            GameObject.Destroy(tracer.tracer);
                         }
                     }
 
@@ -811,21 +824,38 @@ namespace BDDMP
         #region Turret Yaw
 
         void TurretYawHook(Quaternion rot, Guid vesselID, uint turretID) {
-            using (MessageWriter mw = new MessageWriter())
+                        //Reset tickCount at beginning of Hook
+            if (turretTickCount == syncTurretHz && (Time.realtimeSinceStartup - lastTurretsync) >= 1)
             {
-                mw.Write<double>(Planetarium.GetUniversalTime());
-
-                mw.Write<float>(rot.x);
-                mw.Write<float>(rot.y);
-                mw.Write<float>(rot.z);
-                mw.Write<float>(rot.w);
-
-                mw.Write<string>(vesselID.ToString());
-
-                mw.Write<uint>(turretID);
-
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretYawHook", mw.GetMessageBytes(), true, true);
+                turretTickCount = 0;
             }
+
+            //Only send per fx tick rate
+            bool clearToSend = false || Time.realtimeSinceStartup - lastTurretsync > (1f / (float)syncTurretHz) * (float)turretTickCount;
+
+            if (clearToSend)
+            {
+                //Set lastFXSync and raise tick count right away
+                lastTurretsync = Time.realtimeSinceStartup;
+                turretTickCount++;
+
+                using (MessageWriter mw = new MessageWriter())
+                {
+                    mw.Write<double>(Planetarium.GetUniversalTime());
+
+                    mw.Write<float>(rot.x);
+                    mw.Write<float>(rot.y);
+                    mw.Write<float>(rot.z);
+                    mw.Write<float>(rot.w);
+
+                    mw.Write<string>(vesselID.ToString());
+
+                    mw.Write<uint>(turretID);
+
+                    DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretYawHook", mw.GetMessageBytes(), true, true);
+                }
+            }
+            turretTickCount++;
         }
 
         void HandleTurretYawHook(byte[] messageData) {
@@ -855,21 +885,38 @@ namespace BDDMP
 
         void TurretPitchHook(Quaternion rot, Guid vesselID, uint turretID)
         {
-            using (MessageWriter mw = new MessageWriter())
+            //Reset tickCount at beginning of Hook
+            if (turretTickCount == syncTurretHz && (Time.realtimeSinceStartup - lastTurretsync) >= 1)
             {
-                mw.Write<double>(Planetarium.GetUniversalTime());
-
-                mw.Write<float>(rot.x);
-                mw.Write<float>(rot.y);
-                mw.Write<float>(rot.z);
-                mw.Write<float>(rot.w);
-
-                mw.Write<string>(vesselID.ToString());
-
-                mw.Write<uint>(turretID);
-
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretPitchHook", mw.GetMessageBytes(), true, true);
+                turretTickCount = 0;
             }
+
+            //Only send per fx tick rate
+            bool clearToSend = false || Time.realtimeSinceStartup - lastTurretsync > (1f / (float)syncTurretHz) * (float)turretTickCount;
+
+            if (clearToSend)
+            {
+                //Set lastFXSync and raise tick count right away
+                lastTurretsync = Time.realtimeSinceStartup;
+                turretTickCount++;
+
+                using (MessageWriter mw = new MessageWriter())
+                {
+                    mw.Write<double>(Planetarium.GetUniversalTime());
+
+                    mw.Write<float>(rot.x);
+                    mw.Write<float>(rot.y);
+                    mw.Write<float>(rot.z);
+                    mw.Write<float>(rot.w);
+
+                    mw.Write<string>(vesselID.ToString());
+
+                    mw.Write<uint>(turretID);
+
+                    DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretPitchHook", mw.GetMessageBytes(), true, true);
+                }
+            }
+            turretTickCount++;
         }
 
         void HandleTurretPitchHook(byte[] messageData)
