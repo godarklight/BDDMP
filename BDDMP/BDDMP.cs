@@ -59,6 +59,7 @@ namespace BDDMP
 
             //Message Registration
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:DamageHook", HandleDamageHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:MultiDamageHook", HandleMultiDamageHook);
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletHitFXHook", HandleBulletHitFXHook);
             DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
@@ -70,6 +71,7 @@ namespace BDDMP
 
             //Hook Registration
             HitManager.RegisterHitHook (DamageHook);
+            HitManager.RegisterMultiHitHook(MultiDamageHook);
             HitManager.RegisterBulletHook (BulletHitFXHook);
             HitManager.RegisterExplosionHook (ExplosionFXHook);
             HitManager.RegisterTurretYawHook(TurretYawHook);
@@ -83,7 +85,15 @@ namespace BDDMP
 
         public void Update()
         {
-            PurgeUpdates ();
+            PurgeDamageUpdates();
+            PurgeBulletHitUpdates();
+            PurgeExplosionUpdates();
+            PurgeTracerInitUpdates();
+            PurgeTracerUpdates();
+            PurgeTracerDestroyUpdates();
+            PurgeYawUpdates();
+            PurgePitchUpdates();
+            PurgeLaserUpdates();
 
             UpdateDamage ();
             UpdateBulletHit ();
@@ -94,43 +104,68 @@ namespace BDDMP
             UpdateTurretYaw ();
             UpdateTurretPitch ();
             UpdateLaser ();
+
+            PurgeTracers ();
         }
 
 
         #region Update Functions
 
-        private void PurgeUpdates()
+        #region Purge Functions
+
+        private void PurgeDamageUpdates()
         {
-            foreach (BDArmoryDamageUpdate update in damageEntriesCompleted) {
-                damageEntries.Remove (update);
+            foreach (BDArmoryDamageUpdate update in damageEntriesCompleted)
+            {
+                damageEntries.Remove(update);
             }
-            foreach (BDArmoryDamageUpdate update in damageEntries) {
+            foreach (BDArmoryDamageUpdate update in damageEntries)
+            {
                 //If update is older than 3 seconds, purge it
-                if (Planetarium.GetUniversalTime () - update.entryTime > updateHistoryMinutesToLive * 60) {
-                    damageEntries.Remove (update);
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    damageEntries.Remove(update);
                 }
             }
+            damageEntriesCompleted.Clear();
+        }
 
-            foreach (BDArmoryBulletHitUpdate update in bulletHitEntriesCompleted) {
-                bulletHitEntries.Remove (update);
+        private void PurgeBulletHitUpdates()
+        {
+            foreach (BDArmoryBulletHitUpdate update in bulletHitEntriesCompleted)
+            {
+                bulletHitEntries.Remove(update);
             }
-            foreach (BDArmoryBulletHitUpdate update in bulletHitEntries) {
+            foreach (BDArmoryBulletHitUpdate update in bulletHitEntries)
+            {
                 //If update is older than 3 seconds, purge it
-                if (Planetarium.GetUniversalTime () - update.entryTime > updateHistoryMinutesToLive * 60) {
-                    bulletHitEntries.Remove (update);
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    bulletHitEntries.Remove(update);
                 }
             }
+            bulletHitEntriesCompleted.Clear();
+        }
 
-            foreach (BDArmoryExplosionUpdate update in explosionEntriesCompleted) {
-                explosionEntries.Remove (update);
+        private void PurgeExplosionUpdates()
+        {
+            foreach (BDArmoryExplosionUpdate update in explosionEntriesCompleted)
+            {
+                explosionEntries.Remove(update);
             }
-            foreach (BDArmoryExplosionUpdate update in explosionEntries) {
+            foreach (BDArmoryExplosionUpdate update in explosionEntries)
+            {
                 //If update is older than 3 seconds, purge it
-                if (Planetarium.GetUniversalTime () - update.entryTime > updateHistoryMinutesToLive * 60) {
-                    explosionEntries.Remove (update);
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    explosionEntries.Remove(update);
                 }
             }
+            explosionEntriesCompleted.Clear();
+        }
 
+        private void PurgeTracerInitUpdates()
+        {
             foreach (BDArmoryTracerInitUpdate update in tracerInitEntriesCompleted)
             {
                 tracerInitEntries.Remove(update);
@@ -143,17 +178,29 @@ namespace BDDMP
                     tracerInitEntries.Remove(update);
                 }
             }
+            tracerInitEntriesCompleted.Clear();
+        }
 
-            foreach (BDArmoryTracerUpdate update in tracerEntriesCompleted) {
-                tracerEntries.Remove (update);
+        private void PurgeTracerUpdates()
+        {
+            foreach (BDArmoryTracerUpdate update in tracerEntriesCompleted)
+            {
+                tracerEntries.Remove(update);
             }
-            foreach (BDArmoryTracerUpdate update in tracerEntries) {
+
+            foreach (BDArmoryTracerUpdate update in tracerEntries)
+            {
                 //If update is older than 3 seconds, purge it
-                if (Planetarium.GetUniversalTime () - update.entryTime > updateHistoryMinutesToLive * 60) {
-                    tracerEntries.Remove (update);
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    tracerEntries.Remove(update);
                 }
             }
+            tracerEntriesCompleted.Clear();
+        }
 
+        private void PurgeTracerDestroyUpdates()
+        {
             foreach (BDArmoryTracerDestroyUpdate update in tracerDestroyEntriesCompleted)
             {
                 tracerDestroyEntries.Remove(update);
@@ -166,7 +213,11 @@ namespace BDDMP
                     tracerDestroyEntries.Remove(update);
                 }
             }
+            tracerDestroyEntriesCompleted.Clear();
+        }
 
+        private void PurgeYawUpdates()
+        {
             foreach (BDArmoryTurretRotUpdate update in turretYawEntriesCompleted)
             {
                 turretYawEntries.Remove(update);
@@ -179,8 +230,11 @@ namespace BDDMP
                     turretYawEntries.Remove(update);
                 }
             }
+            turretYawEntriesCompleted.Clear();
+        }
 
-
+        private void PurgePitchUpdates()
+        {
             foreach (BDArmoryTurretRotUpdate update in turretPitchEntriesCompleted)
             {
                 turretPitchEntries.Remove(update);
@@ -193,7 +247,11 @@ namespace BDDMP
                     turretPitchEntries.Remove(update);
                 }
             }
+            turretPitchEntriesCompleted.Clear();
+        }
 
+        private void PurgeLaserUpdates()
+        {
             foreach (BDArmoryLaserUpdate update in laserEntriesCompleted)
             {
                 laserEntries.Remove(update);
@@ -206,13 +264,17 @@ namespace BDDMP
                     laserEntries.Remove(update);
                 }
             }
+            laserEntriesCompleted.Clear();
+        }
 
+        private void PurgeTracers()
+        {
             //Cull all desynced Tracers 
             foreach (BDArmouryTracer tracer in tracers.ToArray())
             {
                 try
                 {
-                    if (Planetarium.GetUniversalTime() - tracer.initTime > 120)
+                    if (Planetarium.GetUniversalTime() - tracer.lastUpdateTime > 120)
                     {
                         tracers.Remove(tracer);
                         GameObject.Destroy(tracer.tracer);
@@ -223,17 +285,9 @@ namespace BDDMP
                     tracers.Remove(tracer);
                 }
             }
-
-            damageEntriesCompleted.Clear ();
-            bulletHitEntriesCompleted.Clear ();
-            explosionEntriesCompleted.Clear ();
-            tracerInitEntriesCompleted.Clear ();
-            tracerEntriesCompleted.Clear ();
-            tracerDestroyEntriesCompleted.Clear ();
-            turretYawEntriesCompleted.Clear ();
-            turretPitchEntriesCompleted.Clear ();
-            laserEntriesCompleted.Clear();
         }
+
+        #endregion
 
         private void UpdateDamage()
         {
@@ -336,7 +390,7 @@ namespace BDDMP
                     BDArmouryTracer tracer = new BDArmouryTracer();
 
                     tracer.id = update.tracerID;
-                    tracer.initTime = Planetarium.GetUniversalTime();
+                    tracer.lastUpdateTime = Planetarium.GetUniversalTime();
 
                     foreach (Vessel v in FlightGlobals.Vessels.ToArray())
                     {
@@ -381,6 +435,8 @@ namespace BDDMP
                     {
                         if (tracer.id == update.tracerID)
                         {
+                            tracer.lastUpdateTime = Planetarium.GetUniversalTime();
+
                             LineRenderer lr = tracer.tracer.GetComponent<LineRenderer>();
                             lr.SetPosition(0, update.p1 + tracer.offset);
                             lr.SetPosition(1, update.p2 + tracer.offset);
@@ -524,6 +580,7 @@ namespace BDDMP
         #region Network Code
 
         #region Damage
+        #region Single
         void DamageHook(Part hitPart)
         {
             //DarkLog.Debug ("BDDMP Asked to handle HitHook!");
@@ -557,6 +614,50 @@ namespace BDDMP
 
             }
         }
+        #endregion
+
+        #region Multi
+        void MultiDamageHook(List<Part> hitParts)
+        {
+            //DarkLog.Debug ("BDDMP Asked to handle HitHook!");
+            using (MessageWriter mw = new MessageWriter())
+            {
+                mw.Write<double>(Planetarium.GetUniversalTime());
+                mw.Write<int>(hitParts.Count);
+                foreach (Part hitPart in hitParts)
+                {
+                    mw.Write<string>(hitPart.vessel.id.ToString());
+                    mw.Write<uint>(hitPart.flightID);
+                    mw.Write<double>(hitPart.temperature);
+                    mw.Write<double>(hitPart.vessel.externalTemperature);
+                }
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:MultiDamageHook", mw.GetMessageBytes(), true, true);
+            }
+        }
+
+        void HandleMultiDamageHook(byte[] messageData)
+        {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                double timeStamp = mr.Read<double>();
+                int hitCount = mr.Read<int>();
+                while (hitCount > 0)
+                {
+                    Guid vesselID = new Guid(mr.Read<string>());
+                    uint partID = mr.Read<uint>();
+                    double partTemp = mr.Read<double>();
+                    double partTempExt = mr.Read<double>();
+
+                    BDArmoryDamageUpdate update = new BDArmoryDamageUpdate(timeStamp, vesselID, partID, partTemp, partTempExt);
+                    damageEntries.Add(update);
+
+                    hitCount--;
+                }
+
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Bullet Hit FX
@@ -1164,7 +1265,7 @@ namespace BDDMP
 
     public class BDArmouryTracer
     {
-        public double initTime;
+        public double lastUpdateTime;
         public Guid id;
         public Vector3 offset;
         public GameObject tracer;
