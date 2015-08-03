@@ -212,7 +212,7 @@ namespace BDDMP
             {
                 try
                 {
-                    if (Planetarium.GetUniversalTime() - tracer.initTime > 60)
+                    if (Planetarium.GetUniversalTime() - tracer.initTime > 120)
                     {
                         tracers.Remove(tracer);
                         GameObject.Destroy(tracer.tracer);
@@ -342,14 +342,8 @@ namespace BDDMP
                     {
                         if (v.id == update.vesselID)
                         {
-                            DarkLog.Debug("LASER: Found Target Vessel");
-                            foreach (Part p in v.Parts.ToArray())
-                            {
-                                if (p.craftID == update.partID)
-                                {
-                                    tracer.offset = p.transform.position;
-                                }
-                            }
+                            DarkLog.Debug("TRACER: Found Target Vessel");
+                            tracer.offset = v.transform.position;
                         }
                     }
 
@@ -444,6 +438,7 @@ namespace BDDMP
                                 if (p.craftID == update.turretID)
                                 {
                                     p.GetComponent<BahaTurret.BahaTurret>().yawTransform.localRotation = update.rot;
+                                    p.GetComponent<BahaTurret.BahaTurret>().turretShowEnabled = true;
                                     //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
@@ -475,6 +470,7 @@ namespace BDDMP
                                 if (p.craftID == update.turretID)
                                 {
                                     p.GetComponent<BahaTurret.BahaTurret>().pitchTransform.localRotation = update.rot;
+                                    p.GetComponent<BahaTurret.BahaTurret>().turretShowEnabled = true;
                                     //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
@@ -824,7 +820,8 @@ namespace BDDMP
         #region Turret Yaw
 
         void TurretYawHook(Quaternion rot, Guid vesselID, uint turretID) {
-                        //Reset tickCount at beginning of Hook
+            /*
+            //Reset tickCount at beginning of Hook
             if (turretTickCount == syncTurretHz && (Time.realtimeSinceStartup - lastTurretsync) >= 1)
             {
                 turretTickCount = 0;
@@ -838,7 +835,7 @@ namespace BDDMP
                 //Set lastFXSync and raise tick count right away
                 lastTurretsync = Time.realtimeSinceStartup;
                 turretTickCount++;
-
+            */
                 using (MessageWriter mw = new MessageWriter())
                 {
                     mw.Write<double>(Planetarium.GetUniversalTime());
@@ -854,8 +851,8 @@ namespace BDDMP
 
                     DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretYawHook", mw.GetMessageBytes(), true, true);
                 }
-            }
-            turretTickCount++;
+            //}
+            //turretTickCount++;
         }
 
         void HandleTurretYawHook(byte[] messageData) {
@@ -885,6 +882,7 @@ namespace BDDMP
 
         void TurretPitchHook(Quaternion rot, Guid vesselID, uint turretID)
         {
+            /*
             //Reset tickCount at beginning of Hook
             if (turretTickCount == syncTurretHz && (Time.realtimeSinceStartup - lastTurretsync) >= 1)
             {
@@ -899,7 +897,7 @@ namespace BDDMP
                 //Set lastFXSync and raise tick count right away
                 lastTurretsync = Time.realtimeSinceStartup;
                 turretTickCount++;
-
+            */
                 using (MessageWriter mw = new MessageWriter())
                 {
                     mw.Write<double>(Planetarium.GetUniversalTime());
@@ -915,8 +913,8 @@ namespace BDDMP
 
                     DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretPitchHook", mw.GetMessageBytes(), true, true);
                 }
-            }
-            turretTickCount++;
+            //}
+            //turretTickCount++;
         }
 
         void HandleTurretPitchHook(byte[] messageData)
