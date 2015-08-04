@@ -33,6 +33,7 @@ namespace BDDMP
         static List<BDArmoryTurretRotUpdate> turretYawEntries = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryTurretRotUpdate> turretPitchEntries = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryLaserUpdate> laserEntries = new List<BDArmoryLaserUpdate>();
+        static List<BDArmoryFlareUpdate> flareEntries = new List<BDArmoryFlareUpdate>();
 
         //Update Completion Entries
         static List<BDArmoryDamageUpdate> damageEntriesCompleted = new List<BDArmoryDamageUpdate> ();
@@ -44,9 +45,13 @@ namespace BDDMP
         static List<BDArmoryTurretRotUpdate> turretYawEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryTurretRotUpdate> turretPitchEntriesCompleted = new List<BDArmoryTurretRotUpdate>();
         static List<BDArmoryLaserUpdate> laserEntriesCompleted = new List<BDArmoryLaserUpdate>();
+        static List<BDArmoryFlareUpdate> flareEntriesCompleted = new List<BDArmoryFlareUpdate>();
 
         //Tracers
         static List<BDArmouryTracer> tracers = new List<BDArmouryTracer>();
+
+        //Combinator pool
+        static Dictionary<FlareObject, double> flares = new Dictionary<FlareObject, double>(); System.Object flareLock = new System.Object();
 
 		public BDDMPSynchronizer ()
 		{
@@ -68,6 +73,7 @@ namespace BDDMP
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerHook", HandleBulletTracerHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerDestroyHook", HandleBulletTracerDestroyHook);
             DMPModInterface.fetch.RegisterRawModHandler("BDDMP:LaserHook", HandleLaserHook);
+            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:FlareHook", HandleFlareHook);
 
             //Hook Registration
             HitManager.RegisterHitHook (DamageHook);
@@ -80,6 +86,9 @@ namespace BDDMP
             HitManager.RegisterTracerHook (BulletTracerHook);
             HitManager.RegisterTracerDestroyHook(BulletTracerDestroyHook);
             HitManager.RegisterLaserHook(LaserHook);
+            HitManager.RegisterFlareHook(FlareHook);
+
+            HitManager.RegisterAllowControlHook(CanControl);
             HitManager.RegisterAllowDamageHook (VesselCanBeDamaged);
 		}
 
@@ -94,6 +103,9 @@ namespace BDDMP
             PurgeYawUpdates();
             PurgePitchUpdates();
             PurgeLaserUpdates();
+            PurgeFlareUpdates();
+
+            CombineFlares();
 
             UpdateDamage ();
             UpdateBulletHit ();
@@ -104,6 +116,7 @@ namespace BDDMP
             UpdateTurretYaw ();
             UpdateTurretPitch ();
             UpdateLaser ();
+            UpdateFlare();
 
             PurgeTracers ();
         }
@@ -267,6 +280,23 @@ namespace BDDMP
             laserEntriesCompleted.Clear();
         }
 
+        private void PurgeFlareUpdates()
+        {
+            foreach (BDArmoryFlareUpdate update in flareEntriesCompleted)
+            {
+                flareEntries.Remove(update);
+            }
+            foreach (BDArmoryFlareUpdate update in flareEntries)
+            {
+                //If update is older than 3 seconds, purge it
+                if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
+                {
+                    flareEntries.Remove(update);
+                }
+            }
+            flareEntriesCompleted.Clear();
+        }
+
         private void PurgeTracers()
         {
             //Cull all desynced Tracers 
@@ -274,7 +304,7 @@ namespace BDDMP
             {
                 try
                 {
-                    if (Planetarium.GetUniversalTime() - tracer.lastUpdateTime > 120)
+                    if (Planetarium.GetUniversalTime() - tracer.lastUpdateTime > 20)
                     {
                         tracers.Remove(tracer);
                         GameObject.Destroy(tracer.tracer);
@@ -283,6 +313,46 @@ namespace BDDMP
                 catch (NullReferenceException)
                 {
                     tracers.Remove(tracer);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Combinators
+
+        private void CombineFlares()
+        {
+            if (flares.Count > 0)
+            {
+                lock (flareLock)
+                {
+                    using (MessageWriter mw = new MessageWriter())
+                    {
+                        mw.Write<int>(flares.Count);
+                        foreach (KeyValuePair<FlareObject, double> flare in flares)
+                        {
+                            mw.Write<double>(flare.Value);
+
+                            mw.Write<float>(flare.Key.pos.x);
+                            mw.Write<float>(flare.Key.pos.y);
+                            mw.Write<float>(flare.Key.pos.z);
+
+                            mw.Write<float>(flare.Key.rot.x);
+                            mw.Write<float>(flare.Key.rot.y);
+                            mw.Write<float>(flare.Key.rot.z);
+                            mw.Write<float>(flare.Key.rot.w);
+
+                            mw.Write<float>(flare.Key.vel.x);
+                            mw.Write<float>(flare.Key.vel.y);
+                            mw.Write<float>(flare.Key.vel.z);
+
+                            mw.Write<string>(flare.Key.sourceVessel.ToString());
+                        }
+                        DMPModInterface.fetch.SendDMPModMessage("BDDMP:FlareHook", mw.GetMessageBytes(), true, true);
+                        flares.Clear();
+                    }
+
                 }
             }
         }
@@ -571,6 +641,32 @@ namespace BDDMP
                         }
                     }
                     laserEntriesCompleted.Add(update);
+                }
+            }
+        }
+
+        private void UpdateFlare()
+        {
+            //Iterate over updates
+            foreach (BDArmoryFlareUpdate update in flareEntries)
+            {
+                //Don't apply updates till they happen
+                if (ApplyUpdate<BDArmoryFlareUpdate>(update))
+                {
+                    foreach (Vessel v in FlightGlobals.Vessels.ToArray())
+                    {
+                        if (v.id == update.vesselID)
+                        {
+                            GameObject cm = GameDatabase.Instance.GetModel("BDArmory/Models/CMFlare/model");
+                            cm = (GameObject)Instantiate(cm, update.pos + v.transform.position, update.rot);
+                            CMFlare cmf = cm.AddComponent<CMFlare>();
+                            cmf.startVelocity = update.vel;
+                            cmf.sourceVessel = v;
+                            cm.SetActive(true);
+                            break;
+                        }
+                    }
+                    flareEntriesCompleted.Add(update);
                 }
             }
         }
@@ -1095,6 +1191,56 @@ namespace BDDMP
 
         #endregion
 
+        #region Flare
+
+        void FlareHook(FlareObject flare)
+        {
+            lock (flareLock)
+            {
+                flares.Add(flare, Planetarium.GetUniversalTime());
+            }
+        }
+
+        void HandleFlareHook(byte[] messageData)
+        {
+            using (MessageReader mr = new MessageReader(messageData))
+            {
+                int count = mr.Read<int>();
+                while (count > 0)
+                {
+                    double timeStamp = mr.Read<double>();
+
+                    float x = mr.Read<float>();
+                    float y = mr.Read<float>();
+                    float z = mr.Read<float>();
+
+                    Vector3 pos = new Vector3(x, y, z);
+
+                    x = mr.Read<float>();
+                    y = mr.Read<float>();
+                    z = mr.Read<float>();
+                    float w = mr.Read<float>();
+
+                    Quaternion rot = new Quaternion(x, y, z, w);
+
+                    x = mr.Read<float>();
+                    y = mr.Read<float>();
+                    z = mr.Read<float>();
+
+                    Vector3 vel = new Vector3(x, y, z);
+
+                    Guid sourceVessel = new Guid(mr.Read<string>());
+
+                    BDArmoryFlareUpdate update = new BDArmoryFlareUpdate(timeStamp, pos, rot, vel, sourceVessel);
+                    flareEntries.Add(update);
+
+                    count--;
+                }
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Utility Functions
@@ -1114,6 +1260,17 @@ namespace BDDMP
             }
 
             return !VesselWorker.fetch.LenientVesselUpdatedInFuture (vesselID);
+        }
+
+        private bool CanControl()
+        {
+            Guid vesselID = FlightGlobals.ActiveVessel.id;
+            if (VesselWorker.fetch.LenientVesselUpdatedInFuture(vesselID) || VesselWorker.fetch.isSpectating)
+            {
+                ScreenMessages.PostScreenMessage("BDArmory-DMP: Cannot control vessel from the past or while spectating!", 3f, ScreenMessageStyle.UPPER_LEFT);
+            }
+
+            return !VesselWorker.fetch.LenientVesselUpdatedInFuture(vesselID) && !VesselWorker.fetch.isSpectating;
         }
         #endregion
 	}
@@ -1258,6 +1415,23 @@ namespace BDDMP
             this.p2 = p2;
             this.vesselID = vesselID;
             this.turretID = turretID;
+        }
+    }
+
+    public class BDArmoryFlareUpdate : BDArmoryUpdate
+    {
+        public readonly Vector3 pos, vel;
+        public readonly Quaternion rot;
+        public readonly Guid vesselID;
+        public readonly uint turretID;
+
+        public BDArmoryFlareUpdate(double entryTime, Vector3 pos, Quaternion rot, Vector3 vel, Guid vesselID)
+        {
+            this.entryTime = entryTime;
+            this.rot = rot;
+            this.pos = pos;
+            this.vesselID = vesselID;
+            this.vel = vel;
         }
     }
 
