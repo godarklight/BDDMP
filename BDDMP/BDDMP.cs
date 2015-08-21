@@ -18,6 +18,13 @@ namespace BDDMP
         static int tickCount = 0;
         const int updateHistoryMinutesToLive = 3;
 
+        /* TODO
+        bool cmPoolInited = false;
+        ObjectPool flarePool;
+        ObjectPool chaffPool;
+        ObjectPool smokePool;
+        */
+         
         //Update Entries
         static List<BDArmoryDamageUpdate> damageEntries = new List<BDArmoryDamageUpdate> ();
         static List<BDArmoryBulletHitUpdate> bulletHitEntries = new List<BDArmoryBulletHitUpdate> ();
@@ -48,9 +55,7 @@ namespace BDDMP
         static List<BDArmouryTracer> tracers = new List<BDArmouryTracer>();
 
         //Combinator pool
-        static Dictionary<FlareObject, double> flares = new Dictionary<FlareObject, double>(); System.Object flareLock = new System.Object();
-        //static Dictionary<BulletObject, double> bullets = new Dictionary<BulletObject, double>(); System.Object bulletsLock = new System.Object();
-        //static Dictionary<ExplosionObject, double> explosions = new Dictionary<ExplosionObject, double>(); System.Object explosionsLock = new System.Object();
+        static Dictionary<FlareObject, double> flares = new Dictionary<FlareObject, double>(); System.Object flareLock = new System.Object();   
 
 		public BDDMPSynchronizer ()
 		{
@@ -91,10 +96,39 @@ namespace BDDMP
 
             HitManager.RegisterAllowControlHook(CanControl);
             HitManager.RegisterAllowDamageHook (VesselCanBeDamaged);
-		}
+
+        }
 
         public void Update()
         {
+            /*
+            #region CM Init
+            if (!cmPoolInited && GameDatabase.Instance.IsReady())
+            {
+                try
+                {
+                    GameObject cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMFlare/model"));
+                    cm.SetActive(false);
+                    cm.AddComponent<CMFlare>();
+                    flarePool = ObjectPool.CreateObjectPool(cm, 10, true, true);
+
+                    cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMSmoke/cmSmokeModel"));
+                    cm.SetActive(false);
+                    cm.AddComponent<CMSmoke>();
+                    smokePool = ObjectPool.CreateObjectPool(cm, 10, true, true);
+
+                    cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMChaff/model"));
+                    cm.SetActive(false);
+                    cm.AddComponent<CMChaff>();
+                    chaffPool = ObjectPool.CreateObjectPool(cm, 10, true, true);
+
+                    cmPoolInited = true;
+                }
+                catch (ArgumentException) { cmPoolInited = false; } //GameDB not loaded
+            }
+            #endregion
+            */
+
             PurgeDamageUpdates();
             PurgeBulletHitUpdates();
             PurgeExplosionUpdates();
@@ -387,10 +421,12 @@ namespace BDDMP
                 if (ApplyUpdate<BDArmoryDamageUpdate> (update)) {
                     foreach (Vessel vessel in FlightGlobals.Vessels) {
                         if (vessel.id == update.vesselID) {
+                            DarkLog.Debug("DAMAGE: Found Target Vessel");
                             foreach (Part part in vessel.Parts) {
                                 if (part.flightID == update.flightID) {
                                     part.temperature = update.tempurature;
                                     part.vessel.externalTemperature = update.externalTempurature;
+                                    DarkLog.Debug("DAMAGE: Found And Changed Dammaged Part");
                                 }
                             }
                         }
@@ -409,14 +445,18 @@ namespace BDDMP
                     Vector3 relPosition = new Vector3 ();
                     bool positionSet = false;
 
-
-                    if (FlightGlobals.ActiveVessel.id == update.vesselOriginID) {
-                        relPosition = FlightGlobals.ActiveVessel.mainBody.bodyTransform.InverseTransformPoint (update.position);
+                    if (FlightGlobals.ActiveVessel.id == update.vesselOriginID)
+                    {
+                        relPosition = update.position + FlightGlobals.ActiveVessel.transform.position;
                         positionSet = true;
-                    } else {
-                        foreach (Vessel vessel in FlightGlobals.Vessels) {
-                            if (vessel.id == update.vesselOriginID) {
-                                relPosition = vessel.mainBody.bodyTransform.InverseTransformPoint (update.position);
+                    }
+                    else
+                    {
+                        foreach (Vessel vessel in FlightGlobals.Vessels)
+                        {
+                            if (vessel.id == update.vesselOriginID)
+                            {
+                                relPosition = update.position + vessel.transform.position;
                                 positionSet = true;
                             }
                         }
@@ -460,7 +500,7 @@ namespace BDDMP
                     if (HighLogic.LoadedScene == GameScenes.FLIGHT) {
                         foreach (Vessel vessel in FlightGlobals.Vessels) {
                             if (vessel.id == update.vesselOriginID) {
-                                ExplosionFX.CreateExplosion (vessel.mainBody.bodyTransform.InverseTransformPoint(update.position), update.radius, update.power, vessel, update.direction, update.explModelPath, update.soundPath, false);
+                                ExplosionFX.CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, vessel, update.direction, update.explModelPath, update.soundPath, false);
                             }
                         }
                     }
@@ -583,7 +623,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<BahaTurret.BahaTurret>().yawTransform.localRotation = update.rot;
+                                    p.GetComponent<ModuleTurret>().yawTransform.localRotation = update.rot;
                                     //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
@@ -614,7 +654,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<BahaTurret.BahaTurret>().pitchTransform.localRotation = update.rot;
+                                    p.GetComponent<ModuleTurret>().pitchTransform.localRotation = update.rot;
                                     //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
@@ -639,18 +679,14 @@ namespace BDDMP
                     {
                         if (v.id == update.vesselID)
                         {
-                            //DarkLog.Debug("DEPLOY: Found Target Vessel");
+                            DarkLog.Debug("DEPLOY: Found Target Vessel");
                             foreach (Part p in v.Parts.ToArray())
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<BahaTurret.BahaTurret>().turretShowEnabled = update.state;
-                                    if (!update.state)
-                                    {
-                                        p.GetComponent<BahaTurret.BahaTurret>().deployed = false;
-                                        p.GetComponent<BahaTurret.BahaTurret>().turretEnabled = false;
-                                    }
-                                    //DarkLog.Debug("DEPLOY: Found And Changed Turret");
+                                    //p.GetComponent<ModuleWeapon>().deployState.enabled = update.state;
+                                    //p.GetComponent<ModuleWeapon>().dmpSlave = update.state;
+                                    DarkLog.Debug("DEPLOY: Found And Changed Turret");
                                     break;
                                 }
                             }
@@ -679,16 +715,36 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    //TODO Add Sound
-                                    foreach (Transform tf in p.FindModelTransforms("fireTransform"))
+                                    /*
+                                    if (!(update.p1 == Vector3.zero && update.p2 == Vector3.zero))
                                     {
-                                        LineRenderer lr = tf.gameObject.GetComponent<LineRenderer>();
-                                        lr.SetPosition(0, update.p1 + tf.position);
-                                        lr.SetPosition(1, update.p2 + v.gameObject.transform.position);
-                                    }
-                                    DarkLog.Debug("LASER: Found And Changed Turret");
-                                    break;
+                                        p.GetComponent<ModuleWeapon>().dmpFakeLaser = true;
+
+                                        for (int i = 0; i < p.GetComponent<ModuleWeapon>().laserRenderers.Length; i++)
+                                        {
+                                            p.GetComponent<ModuleWeapon>().laserRenderers[i].enabled = true;
+                                        }
+
+                                        //TODO Add Sound
+                                        for (int i = 0; i < p.GetComponent<ModuleWeapon>().fireTransforms.Length; i++)
+                                        {
+                                             Transform tf = p.GetComponent<ModuleWeapon>().fireTransforms[i];
+
+                                             LineRenderer lr = p.GetComponent<ModuleWeapon>().laserRenderers[i];
+
+                                             lr.SetPosition(0, update.p1 + tf.position);
+                                             lr.SetPosition(1, update.p2 + v.gameObject.transform.position);
+                                         }
+                                         DarkLog.Debug("LASER: Found And Changed Turret");
+                                         break;
+                                     }
+                                     else
+                                     {
+                                         p.GetComponent<ModuleWeapon>().dmpFakeLaser = false;
+                                     }
+                                    */
                                 }
+                                    
                             }
                             break;
                         }
@@ -710,12 +766,16 @@ namespace BDDMP
                     {
                         if (v.id == update.vesselID)
                         {
-                            GameObject cm = GameDatabase.Instance.GetModel("BDArmory/Models/CMFlare/model");
-                            cm = (GameObject)Instantiate(cm, update.pos + v.transform.position, update.rot);
+                            DarkLog.Debug("FLARE: Found Target Vessel");
+                            GameObject cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMFlare/model"));
+                            cm.transform.position = update.pos + v.transform.position;
+                            cm.transform.rotation = update.rot;
                             CMFlare cmf = cm.AddComponent<CMFlare>();
                             cmf.startVelocity = update.vel;
                             cmf.sourceVessel = v;
+
                             cm.SetActive(true);
+                            DarkLog.Debug("FLARE: Created Flare");
                             break;
                         }
                     }
@@ -825,7 +885,8 @@ namespace BDDMP
                 //DarkLog.Debug ("BDDMP Asked to handle BulletHook!");
                 using (MessageWriter mw = new MessageWriter ()) {
                     //Get position in world coordinates
-                    Vector3 vesselPositionBullet = FlightGlobals.ActiveVessel.mainBody.bodyTransform.TransformPoint (bullet.position);
+                    //Vector3 vesselPositionBullet = FlightGlobals.ActiveVessel.mainBody.bodyTransform.TransformPoint (bullet.position);
+                    Vector3 vesselPositionBullet = bullet.position - FlightGlobals.ActiveVessel.transform.position;
 
                     mw.Write<double> (Planetarium.GetUniversalTime ());
                     mw.Write<string> (FlightGlobals.ActiveVessel.id.ToString ());
@@ -888,7 +949,7 @@ namespace BDDMP
                 //DarkLog.Debug ("BDDMP Asked to handle ExplosionHook!");
                 using (MessageWriter mw = new MessageWriter ()) {
                     //Get position in world coordinates
-                    Vector3 vesselPositionExplosion = explosion.sourceVessel.mainBody.bodyTransform.TransformPoint (explosion.position);
+                    Vector3 vesselPositionExplosion = explosion.position - explosion.sourceVessel.transform.position;
 
                     mw.Write<double> (Planetarium.GetUniversalTime ());
                     mw.Write<float> (vesselPositionExplosion.x);
@@ -1001,7 +1062,7 @@ namespace BDDMP
 
                 mw.Write<string>(bullet.tracerID.ToString());
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:BulletTracerHook", mw.GetMessageBytes(), true, true);
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:BulletTracerHook", mw.GetMessageBytes(), true, false);
             }
         }
 
@@ -1248,7 +1309,7 @@ namespace BDDMP
 
                 mw.Write<uint>(turretID);
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:LaserHook", mw.GetMessageBytes(), true, true);
+                DMPModInterface.fetch.SendDMPModMessage("BDDMP:LaserHook", mw.GetMessageBytes(), true, false);
             }
         }
 
