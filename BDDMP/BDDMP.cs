@@ -624,6 +624,7 @@ namespace BDDMP
                                 if (p.craftID == update.turretID)
                                 {
                                     p.GetComponent<ModuleTurret>().yawTransform.localRotation = update.rot;
+                                    p.GetComponent<ModuleTurret>().remoteControl = true;
                                     //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
@@ -655,6 +656,7 @@ namespace BDDMP
                                 if (p.craftID == update.turretID)
                                 {
                                     p.GetComponent<ModuleTurret>().pitchTransform.localRotation = update.rot;
+                                    p.GetComponent<ModuleTurret>().remoteControl = true;
                                     //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
