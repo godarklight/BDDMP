@@ -684,8 +684,17 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    //p.GetComponent<ModuleWeapon>().deployState.enabled = update.state;
-                                    //p.GetComponent<ModuleWeapon>().dmpSlave = update.state;
+                                    if (update.state)
+                                    {
+                                        p.GetComponent<ModuleWeapon>().StopCoroutine("ShutdownRoutine");
+                                        p.GetComponent<ModuleWeapon>().StartCoroutine("StartupRoutine");
+                                    }
+                                    else
+                                    {
+                                        p.GetComponent<ModuleWeapon>().StopCoroutine("StartupRoutine");
+                                        p.GetComponent<ModuleWeapon>().StartCoroutine("ShutdownRoutine");
+                                    }
+                                    p.GetComponent<ModuleWeapon>().deployLocked = true;
                                     DarkLog.Debug("DEPLOY: Found And Changed Turret");
                                     break;
                                 }
