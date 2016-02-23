@@ -500,7 +500,7 @@ namespace BDDMP
                     if (HighLogic.LoadedScene == GameScenes.FLIGHT) {
                         foreach (Vessel vessel in FlightGlobals.Vessels) {
                             if (vessel.id == update.vesselOriginID) {
-                                ExplosionFX.CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, vessel, update.direction, update.explModelPath, update.soundPath, false);
+                                ExplosionFX.CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, update.heat, vessel, update.direction, update.explModelPath, update.soundPath, false);
                             }
                         }
                     }
@@ -968,6 +968,7 @@ namespace BDDMP
                     mw.Write<float> (vesselPositionExplosion.z);
                     mw.Write<float> (explosion.raduis);
                     mw.Write<float> (explosion.power);
+                    mw.Write<float> (explosion.heat);
                     mw.Write<string> (explosion.sourceVessel.id.ToString ());
                     mw.Write<float> (explosion.direction.x);
                     mw.Write<float> (explosion.direction.y);
@@ -994,6 +995,7 @@ namespace BDDMP
                 float radi = mr.Read<float>();
 
                 float power = mr.Read<float> ();
+                float heat = mr.Read<float>();
 
                 Guid vesselGUID = new Guid(mr.Read<string>());
 
@@ -1005,7 +1007,7 @@ namespace BDDMP
                 string explPath = mr.Read<string>();
                 string soundPath = mr.Read<string>();
 
-                BDArmoryExplosionUpdate update = new BDArmoryExplosionUpdate (timeStamp, pos, vesselGUID, radi, power, dir, explPath, soundPath);
+                BDArmoryExplosionUpdate update = new BDArmoryExplosionUpdate (timeStamp, pos, vesselGUID, radi, power, heat, dir, explPath, soundPath);
                 explosionEntries.Add (update);
 
             }
@@ -1484,17 +1486,19 @@ namespace BDDMP
         public readonly Guid vesselOriginID;
         public readonly float radius;
         public readonly float power;
+        public readonly float heat;
         public readonly Vector3 direction;
         public readonly string explModelPath;
         public readonly string soundPath;
 
-        public BDArmoryExplosionUpdate(double entryTime, Vector3 position, Guid vesselOriginID, float radius, float power, Vector3 direction, string explModelPath, string soundPath)
+        public BDArmoryExplosionUpdate(double entryTime, Vector3 position, Guid vesselOriginID, float radius, float power, float heat, Vector3 direction, string explModelPath, string soundPath)
         {
             this.entryTime = entryTime;
             this.position = position;
             this.vesselOriginID = vesselOriginID;
             this.radius = radius;
             this.power = power;
+            this.heat = heat;
             this.direction = direction;
             this.explModelPath = explModelPath;
             this.soundPath = soundPath;

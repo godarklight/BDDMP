@@ -29,22 +29,27 @@
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\KSP - MP\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLLS\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="DarkMultiPlayer">
-      <HintPath>..\..\..\KSP - MP\GameData\DarkMultiPlayer\Plugins\DarkMultiPlayer.dll</HintPath>
+    <Reference Include="DarkMultiPlayer, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLLS\DarkMultiPlayer.dll</HintPath>
     </Reference>
-    <Reference Include="DarkMultiPlayer-Common">
-      <HintPath>..\..\..\KSP - MP\GameData\DarkMultiPlayer\Plugins\DarkMultiPlayer-Common.dll</HintPath>
+    <Reference Include="DarkMultiPlayer-Common, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLLS\DarkMultiPlayer-Common.dll</HintPath>
     </Reference>
-    <Reference Include="MessageWriter2">
-      <HintPath>..\..\..\KSP - MP\GameData\DarkMultiPlayer\Plugins\MessageWriter2.dll</HintPath>
+    <Reference Include="MessageWriter2, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLLS\MessageWriter2.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\KSP - MP\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DLLS\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
