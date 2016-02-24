@@ -169,14 +169,16 @@ namespace BDDMP
             {
                 damageEntries.Remove(update);
             }
+            List<BDArmoryDamageUpdate> removeList = new List<BDArmoryDamageUpdate>();
             foreach (BDArmoryDamageUpdate update in damageEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    damageEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            damageEntries.RemoveAll(x => removeList.Contains(x));
             damageEntriesCompleted.Clear();
         }
 
@@ -186,14 +188,16 @@ namespace BDDMP
             {
                 bulletHitEntries.Remove(update);
             }
+            List<BDArmoryBulletHitUpdate> removeList = new List<BDArmoryBulletHitUpdate>();
             foreach (BDArmoryBulletHitUpdate update in bulletHitEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    bulletHitEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             bulletHitEntriesCompleted.Clear();
         }
 
@@ -203,14 +207,16 @@ namespace BDDMP
             {
                 explosionEntries.Remove(update);
             }
+            List<BDArmoryExplosionUpdate> removeList = new List<BDArmoryExplosionUpdate>();
             foreach (BDArmoryExplosionUpdate update in explosionEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    explosionEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             explosionEntriesCompleted.Clear();
         }
 
@@ -220,14 +226,16 @@ namespace BDDMP
             {
                 tracerInitEntries.Remove(update);
             }
+            List<BDArmoryTracerInitUpdate> removeList = new List<BDArmoryTracerInitUpdate>();
             foreach (BDArmoryTracerInitUpdate update in tracerInitEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    tracerInitEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             tracerInitEntriesCompleted.Clear();
         }
 
@@ -237,15 +245,16 @@ namespace BDDMP
             {
                 tracerEntries.Remove(update);
             }
-
+            List<BDArmoryTracerUpdate> removeList = new List<BDArmoryTracerUpdate>();
             foreach (BDArmoryTracerUpdate update in tracerEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    tracerEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             tracerEntriesCompleted.Clear();
         }
 
@@ -255,14 +264,16 @@ namespace BDDMP
             {
                 tracerDestroyEntries.Remove(update);
             }
+            List<BDArmoryTracerDestroyUpdate> removeList = new List<BDArmoryTracerDestroyUpdate>();
             foreach (BDArmoryTracerDestroyUpdate update in tracerDestroyEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    tracerDestroyEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             tracerDestroyEntriesCompleted.Clear();
         }
 
@@ -272,14 +283,16 @@ namespace BDDMP
             {
                 turretYawEntries.Remove(update);
             }
+            List<BDArmoryTurretRotUpdate> removeList = new List<BDArmoryTurretRotUpdate>();
             foreach (BDArmoryTurretRotUpdate update in turretYawEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    turretYawEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             turretYawEntriesCompleted.Clear();
         }
 
@@ -289,14 +302,16 @@ namespace BDDMP
             {
                 turretPitchEntries.Remove(update);
             }
+            List<BDArmoryTurretRotUpdate> removeList = new List<BDArmoryTurretRotUpdate>();
             foreach (BDArmoryTurretRotUpdate update in turretPitchEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    turretPitchEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             turretPitchEntriesCompleted.Clear();
         }
 
@@ -306,14 +321,16 @@ namespace BDDMP
             {
                 turretDeployEntries.Remove(update);
             }
+            List<BDArmoryTurretDeployUpdate> removeList = new List<BDArmoryTurretDeployUpdate>();
             foreach (BDArmoryTurretDeployUpdate update in turretDeployEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    turretDeployEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             turretDeployEntriesCompleted.Clear();
         }
 
@@ -323,14 +340,16 @@ namespace BDDMP
             {
                 laserEntries.Remove(update);
             }
+            List<BDArmoryLaserUpdate> removeList = new List<BDArmoryLaserUpdate>();
             foreach (BDArmoryLaserUpdate update in laserEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    laserEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             laserEntriesCompleted.Clear();
         }
 
@@ -340,14 +359,16 @@ namespace BDDMP
             {
                 flareEntries.Remove(update);
             }
+            List<BDArmoryFlareUpdate> removeList = new List<BDArmoryFlareUpdate>();
             foreach (BDArmoryFlareUpdate update in flareEntries)
             {
                 //If update is older than 3 seconds, purge it
                 if (Planetarium.GetUniversalTime() - update.entryTime > updateHistoryMinutesToLive * 60)
                 {
-                    flareEntries.Remove(update);
+                    removeList.Add(update);
                 }
             }
+            removeList.RemoveAll(x => removeList.Contains(x));
             flareEntriesCompleted.Clear();
         }
 
@@ -516,7 +537,7 @@ namespace BDDMP
             foreach (BDArmoryTracerInitUpdate update in tracerInitEntries) {
                 //Don't apply updates till they happen
                 if (ApplyUpdate<BDArmoryTracerInitUpdate> (update)) {
-
+                    DarkLog.Debug("TRACERUPDATE: Created Tracer");
                     BDArmouryTracer tracer = new BDArmouryTracer();
 
                     tracer.id = update.tracerID;
@@ -575,6 +596,7 @@ namespace BDDMP
 
                             Light light = tracer.tracer.GetComponent<Light>();
                             light.transform.position = update.p1 + tracer.offset;
+                            DarkLog.Debug("TRACERUPDATE: Created Tracer");
                         }
                     }
 
@@ -592,6 +614,7 @@ namespace BDDMP
                 //Don't apply updates till they happen
                 if (ApplyUpdate<BDArmoryTracerDestroyUpdate>(update))
                 {
+                    DarkLog.Debug("TRACERUPDATE: Destroyed Tracer");
                     foreach (BDArmouryTracer tracer in tracers.ToArray())
                     {
                         if (tracer.id == update.tracerID) {
@@ -623,8 +646,8 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<ModuleTurret>().yawTransform.localRotation = update.rot;
-                                    p.GetComponent<ModuleTurret>().remoteControl = true;
+                                    //p.GetComponent<ModuleTurret>().yawTransform.localRotation = update.rot;
+                                    //p.GetComponent<ModuleTurret>().remoteControl = true;
                                     //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
@@ -655,8 +678,8 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    p.GetComponent<ModuleTurret>().pitchTransform.localRotation = update.rot;
-                                    p.GetComponent<ModuleTurret>().remoteControl = true;
+                                    //p.GetComponent<ModuleTurret>().pitchTransform.localRotation = update.rot;
+                                    //p.GetComponent<ModuleTurret>().remoteControl = true;
                                     //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
@@ -686,7 +709,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    if (update.state)
+                                    /*if (update.state)
                                     {
                                         p.GetComponent<ModuleWeapon>().StopCoroutine("ShutdownRoutine");
                                         p.GetComponent<ModuleWeapon>().StartCoroutine("StartupRoutine");
@@ -696,9 +719,10 @@ namespace BDDMP
                                         p.GetComponent<ModuleWeapon>().StopCoroutine("StartupRoutine");
                                         p.GetComponent<ModuleWeapon>().StartCoroutine("ShutdownRoutine");
                                     }
-                                    p.GetComponent<ModuleWeapon>().deployLocked = true;
+                                    //p.GetComponent<ModuleWeapon>().deployLocked = true;
                                     DarkLog.Debug("DEPLOY: Found And Changed Turret");
                                     break;
+                                    */
                                 }
                             }
                             break;
