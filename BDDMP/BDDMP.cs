@@ -55,7 +55,8 @@ namespace BDDMP
         static List<BDArmouryTracer> tracers = new List<BDArmouryTracer>();
 
         //Combinator pool
-        static Dictionary<FlareObject, double> flares = new Dictionary<FlareObject, double>(); System.Object flareLock = new System.Object();   
+        static Dictionary<FlareObject, double> flares = new Dictionary<FlareObject, double>();
+        System.Object flareLock = new System.Object();   
 
 		public BDDMPSynchronizer ()
 		{
@@ -85,9 +86,9 @@ namespace BDDMP
             HitManager.RegisterMultiHitHook(MultiDamageHook);
             HitManager.RegisterBulletHook (BulletHitFXHook);
             HitManager.RegisterExplosionHook (ExplosionFXHook);
-            HitManager.RegisterTurretYawHook(TurretYawHook);
-            HitManager.RegisterTurretPitchHook(TurretPitchHook);
-            HitManager.RegisterTurretDeployHook(TurretDeployHook);
+            //HitManager.RegisterTurretYawHook(TurretYawHook);
+            //HitManager.RegisterTurretPitchHook(TurretPitchHook);
+            //HitManager.RegisterTurretDeployHook(TurretDeployHook);
             HitManager.RegisterTracerInitHook(BulletTracerInitHook);
             HitManager.RegisterTracerHook (BulletTracerHook);
             HitManager.RegisterTracerDestroyHook(BulletTracerDestroyHook);
@@ -144,16 +145,19 @@ namespace BDDMP
             CombineFlares();
 
             UpdateDamage ();
-            UpdateBulletHit ();
-            UpdateExplosion ();
-            UpdateTracerInit ();
-            UpdateTracer ();
-            UpdateTracerDestroy ();
-            UpdateTurretDeploy();
-            UpdateTurretYaw ();
-            UpdateTurretPitch ();
-            UpdateLaser ();
-            UpdateFlare();
+            if (HighLogic.LoadedScene == GameScenes.FLIGHT)
+            {
+                UpdateBulletHit();
+                UpdateExplosion();
+                UpdateTracerInit();
+                UpdateTracer();
+                UpdateTracerDestroy();
+                //UpdateTurretDeploy();
+                //UpdateTurretYaw ();
+                //UpdateTurretPitch ();
+                UpdateLaser();
+                UpdateFlare();
+            }
 
             PurgeTracers ();
         }
@@ -279,7 +283,7 @@ namespace BDDMP
 
         private void PurgeYawUpdates()
         {
-            foreach (BDArmoryTurretRotUpdate update in turretYawEntriesCompleted)
+            foreach (BDArmoryTurretRotUpdate update in turretYawEntriesCompleted.ToArray())
             {
                 turretYawEntries.Remove(update);
             }
@@ -298,7 +302,7 @@ namespace BDDMP
 
         private void PurgePitchUpdates()
         {
-            foreach (BDArmoryTurretRotUpdate update in turretPitchEntriesCompleted)
+            foreach (BDArmoryTurretRotUpdate update in turretPitchEntriesCompleted.ToArray())
             {
                 turretPitchEntries.Remove(update);
             }
@@ -536,7 +540,7 @@ namespace BDDMP
             //Iterate over updates
             foreach (BDArmoryTracerInitUpdate update in tracerInitEntries) {
                 //Don't apply updates till they happen
-                if (ApplyUpdate<BDArmoryTracerInitUpdate> (update)) {
+                if (ApplyUpdate<BDArmoryTracerInitUpdate> (update) && tracers.Count < 20) {
                     DarkLog.Debug("TRACERUPDATE: Created Tracer");
                     BDArmouryTracer tracer = new BDArmouryTracer();
 
@@ -549,6 +553,7 @@ namespace BDDMP
                         {
                             DarkLog.Debug("TRACER: Found Target Vessel");
                             tracer.offset = v.transform.position;
+                            break;
                         }
                     }
 
@@ -597,6 +602,7 @@ namespace BDDMP
                             Light light = tracer.tracer.GetComponent<Light>();
                             light.transform.position = update.p1 + tracer.offset;
                             DarkLog.Debug("TRACERUPDATE: Created Tracer");
+                            break;
                         }
                     }
 
@@ -620,6 +626,7 @@ namespace BDDMP
                         if (tracer.id == update.tracerID) {
                             tracers.Remove(tracer);
                             GameObject.Destroy(tracer.tracer);
+                            break;
                         }
                     }
 

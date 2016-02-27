@@ -63,4 +63,8 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "D:\KSP BDAMP - TESTENV\Kerbal Space Program - Instance A\GameData\BDArmory\Plugins\BDDMP.dll" /Y
+copy "$(TargetPath)" "D:\KSP BDAMP - TESTENV\Kerbal Space Program - Instance B\GameData\BDArmory\Plugins\BDDMP.dll" /Y</PostBuildEvent>
+  </PropertyGroup>
 </Project>
