@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using BahaTurret;
+using BDArmory;
+using BDArmory.FX;
+using BDArmory.Misc;
+using BDArmory.CounterMeasure;
 using DarkMultiPlayer;
 using MessageStream2;
 
@@ -56,9 +59,13 @@ namespace BDDMP
 
         //Combinator pool
         static Dictionary<FlareObject, double> flares = new Dictionary<FlareObject, double>();
-        System.Object flareLock = new System.Object();   
+        System.Object flareLock = new System.Object();
 
-		public BDDMPSynchronizer ()
+        //WHY THE FRACK ARE THE CYLONS FRACKING WITH OUR FRACKING API
+        static DMPModInterface dmpmi = Client.dmpClient.dmpModInterface;
+        static VesselWorker dmpvw = Client.dmpClient.dmpGame.vesselWorker;
+
+        public BDDMPSynchronizer ()
 		{
 			singleton = this;
 		}
@@ -68,18 +75,18 @@ namespace BDDMP
 			GameObject.DontDestroyOnLoad (this);
 
             //Message Registration
-            DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:DamageHook", HandleDamageHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:MultiDamageHook", HandleMultiDamageHook);
-            DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:BulletHitFXHook", HandleBulletHitFXHook);
-            DMPModInterface.fetch.RegisterRawModHandler ("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretYawHook", HandleTurretYawHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:TurretDeployHook", HandleTurretDeployHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerInitHook", HandleBulletTracerInitHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerHook", HandleBulletTracerHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:BulletTracerDestroyHook", HandleBulletTracerDestroyHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:LaserHook", HandleLaserHook);
-            DMPModInterface.fetch.RegisterRawModHandler("BDDMP:FlareHook", HandleFlareHook);
+            dmpmi.RegisterRawModHandler("BDDMP:DamageHook", HandleDamageHook);
+            dmpmi.RegisterRawModHandler("BDDMP:MultiDamageHook", HandleMultiDamageHook);
+            dmpmi.RegisterRawModHandler("BDDMP:BulletHitFXHook", HandleBulletHitFXHook);
+            dmpmi.RegisterRawModHandler("BDDMP:ExplosionFXHook", HandleExplosionFXHook);
+            dmpmi.RegisterRawModHandler("BDDMP:TurretPitchHook", HandleTurretPitchHook);
+            dmpmi.RegisterRawModHandler("BDDMP:TurretYawHook", HandleTurretYawHook);
+            dmpmi.RegisterRawModHandler("BDDMP:TurretDeployHook", HandleTurretDeployHook);
+            dmpmi.RegisterRawModHandler("BDDMP:BulletTracerInitHook", HandleBulletTracerInitHook);
+            dmpmi.RegisterRawModHandler("BDDMP:BulletTracerHook", HandleBulletTracerHook);
+            dmpmi.RegisterRawModHandler("BDDMP:BulletTracerDestroyHook", HandleBulletTracerDestroyHook);
+            dmpmi.RegisterRawModHandler("BDDMP:LaserHook", HandleLaserHook);
+            dmpmi.RegisterRawModHandler("BDDMP:FlareHook", HandleFlareHook);
 
             //Hook Registration
             HitManager.RegisterHitHook (DamageHook);
@@ -428,7 +435,7 @@ namespace BDDMP
 
                             mw.Write<string>(flare.Key.sourceVessel.ToString());
                         }
-                        DMPModInterface.fetch.SendDMPModMessage("BDDMP:FlareHook", mw.GetMessageBytes(), true, true);
+                        dmpmi.SendDMPModMessage("BDDMP:FlareHook", mw.GetMessageBytes(), true, true);
                         flares.Clear();
                     }
 
@@ -525,7 +532,7 @@ namespace BDDMP
                     if (HighLogic.LoadedScene == GameScenes.FLIGHT) {
                         foreach (Vessel vessel in FlightGlobals.Vessels) {
                             if (vessel.id == update.vesselOriginID) {
-                                ExplosionFX.CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, update.heat, vessel, update.direction, update.explModelPath, update.soundPath, false);
+                                ExplosionFX.CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, update.heat, vessel, update.direction, update.explModelPath, update.soundPath);
                             }
                         }
                     }
@@ -842,7 +849,7 @@ namespace BDDMP
                 mw.Write<double> (hitPart.temperature);
                 mw.Write<double> (hitPart.vessel.externalTemperature);
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:DamageHook", mw.GetMessageBytes(), true, true);
+                dmpmi.SendDMPModMessage("BDDMP:DamageHook", mw.GetMessageBytes(), true, true);
             }
         }
 
@@ -882,7 +889,7 @@ namespace BDDMP
                     mw.Write<double>(hitPart.temperature);
                     mw.Write<double>(hitPart.vessel.externalTemperature);
                 }
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:MultiDamageHook", mw.GetMessageBytes(), true, true);
+                dmpmi.SendDMPModMessage("BDDMP:MultiDamageHook", mw.GetMessageBytes(), true, true);
             }
         }
 
@@ -940,7 +947,7 @@ namespace BDDMP
                     mw.Write<float> (bullet.normalDirection.z);
                     mw.Write<bool> (bullet.ricochet);
 
-                    DMPModInterface.fetch.SendDMPModMessage ("BDDMP:BulletHitFXHook", mw.GetMessageBytes (), true, false);
+                    dmpmi.SendDMPModMessage ("BDDMP:BulletHitFXHook", mw.GetMessageBytes (), true, false);
                 }
                 tickCount++;
             }
@@ -1007,7 +1014,7 @@ namespace BDDMP
                     mw.Write<string> (explosion.explModelPath);
                     mw.Write<string> (explosion.soundPath);
 
-                    DMPModInterface.fetch.SendDMPModMessage ("BDDMP:ExplosionFXHook", mw.GetMessageBytes (), true, true);
+                    dmpmi.SendDMPModMessage ("BDDMP:ExplosionFXHook", mw.GetMessageBytes (), true, true);
                 }
                 tickCount++;
             }
@@ -1060,7 +1067,7 @@ namespace BDDMP
                 mw.Write<uint>(bullet.turretID);
                 mw.Write<string>(bullet.bulletTexPath);
 
-                DMPModInterface.fetch.SendDMPModMessage ("BDDMP:BulletTracerInitHook", mw.GetMessageBytes (), true, true);
+                dmpmi.SendDMPModMessage ("BDDMP:BulletTracerInitHook", mw.GetMessageBytes (), true, true);
             }
         }
 
@@ -1106,7 +1113,7 @@ namespace BDDMP
 
                 mw.Write<string>(bullet.tracerID.ToString());
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:BulletTracerHook", mw.GetMessageBytes(), true, false);
+                dmpmi.SendDMPModMessage("BDDMP:BulletTracerHook", mw.GetMessageBytes(), true, false);
             }
         }
 
@@ -1153,7 +1160,7 @@ namespace BDDMP
                 mw.Write<double>(Planetarium.GetUniversalTime());
                 mw.Write<string>(bullet.ToString());
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:BulletTracerDestroyHook", mw.GetMessageBytes(), true, true);
+                dmpmi.SendDMPModMessage("BDDMP:BulletTracerDestroyHook", mw.GetMessageBytes(), true, true);
             }
         }
 
@@ -1204,7 +1211,7 @@ namespace BDDMP
 
                     mw.Write<uint>(turretID);
 
-                    DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretYawHook", mw.GetMessageBytes(), true, true);
+                    dmpmi.SendDMPModMessage("BDDMP:TurretYawHook", mw.GetMessageBytes(), true, true);
                 }
             //}
             //turretTickCount++;
@@ -1266,7 +1273,7 @@ namespace BDDMP
 
                     mw.Write<uint>(turretID);
 
-                    DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretPitchHook", mw.GetMessageBytes(), true, true);
+                    dmpmi.SendDMPModMessage("BDDMP:TurretPitchHook", mw.GetMessageBytes(), true, true);
                 }
             //}
             //turretTickCount++;
@@ -1310,7 +1317,7 @@ namespace BDDMP
 
                 mw.Write<uint>(turretID);
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:TurretDeployHook", mw.GetMessageBytes(), true, true);
+                dmpmi.SendDMPModMessage("BDDMP:TurretDeployHook", mw.GetMessageBytes(), true, true);
             }
         }
 
@@ -1353,7 +1360,7 @@ namespace BDDMP
 
                 mw.Write<uint>(turretID);
 
-                DMPModInterface.fetch.SendDMPModMessage("BDDMP:LaserHook", mw.GetMessageBytes(), true, false);
+                dmpmi.SendDMPModMessage("BDDMP:LaserHook", mw.GetMessageBytes(), true, false);
             }
         }
 
@@ -1450,22 +1457,22 @@ namespace BDDMP
 
         private bool VesselCanBeDamaged(Guid vesselID)
         {
-            if (VesselWorker.fetch.LenientVesselUpdatedInFuture (vesselID)) {
+            if (dmpvw.LenientVesselUpdatedInFuture(vesselID)) {
                 ScreenMessages.PostScreenMessage("BDArmory-DMP: Cannot damage vessel from the past!", 3f, ScreenMessageStyle.UPPER_LEFT);
             }
 
-            return !VesselWorker.fetch.LenientVesselUpdatedInFuture (vesselID);
+            return !dmpvw.LenientVesselUpdatedInFuture (vesselID);
         }
 
         private bool CanControl()
         {
             Guid vesselID = FlightGlobals.ActiveVessel.id;
-            if (VesselWorker.fetch.LenientVesselUpdatedInFuture(vesselID) || VesselWorker.fetch.isSpectating)
+            if (dmpvw.LenientVesselUpdatedInFuture(vesselID) || dmpvw.isSpectating)
             {
                 ScreenMessages.PostScreenMessage("BDArmory-DMP: Cannot control vessel from the past or while spectating!", 3f, ScreenMessageStyle.UPPER_LEFT);
             }
 
-            return !VesselWorker.fetch.LenientVesselUpdatedInFuture(vesselID) && !VesselWorker.fetch.isSpectating;
+            return !dmpvw.LenientVesselUpdatedInFuture(vesselID) && !dmpvw.isSpectating;
         }
         #endregion
 	}
