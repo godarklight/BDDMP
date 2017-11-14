@@ -2,25 +2,27 @@
 using System.Collections.Generic;
 using DarkMultiPlayer;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace BDDMP
 {
-    /**
-     * This is taken from https://github.com/RimWorldCCLTeam/CommunityCoreLibrary
-     * THANK FRACK for them.
-     * 
-     * ALL HAIL CCL TEAM
-     * 
-     * AND ALL HAIL THE KRACKEN
-     * Which this will inevitably summon,
-     * 
-     * It contains the word unsafe, what do you expect.
-     */
+
     public static class Detourer
     {
 
-        private static List<string> detoured = new List<string>();
-        private static List<string> destinations = new List<string>();
+       /**
+        * This is taken from https://github.com/RimWorldCCLTeam/CommunityCoreLibrary
+        * THANK FRACK for them.
+        * 
+        * ALL HAIL CCL TEAM
+        * 
+        * AND ALL HAIL THE KRACKEN
+        * Which this will inevitably summon,
+        * 
+        * It contains the word unsafe, what do you expect.
+        */
+        private static List<string> cclDetoured = new List<string>();
+        private static List<string> cclDestinations = new List<string>();
 
         /**
             This is a basic first implementation of the IL method 'hooks' (detours) made possible by RawCode's work;
@@ -47,15 +49,15 @@ namespace BDDMP
             string destinationString = destination.DeclaringType.FullName + "." + destination.Name + " @ 0x" + destination.MethodHandle.GetFunctionPointer().ToString("X" + (IntPtr.Size * 2).ToString());
 
 #if DEBUG
-            if (detoured.Contains(sourceString))
+            if (cclDetoured.Contains(sourceString))
             {
-                UnityEngine.Debug.Log("[Detours] Source method ('" + sourceString + "') is previously detoured to '" + destinations[detoured.IndexOf(sourceString)] + "'");
+                UnityEngine.Debug.Log("[Detours] Source method ('" + sourceString + "') is previously detoured to '" + cclDestinations[cclDetoured.IndexOf(sourceString)] + "'");
             }
             UnityEngine.Debug.Log("[Detours] Detouring '" + sourceString + "' to '" + destinationString + "'");
 #endif
 
-            detoured.Add(sourceString);
-            destinations.Add(destinationString);
+            cclDetoured.Add(sourceString);
+            cclDestinations.Add(destinationString);
 
             if (IntPtr.Size == sizeof(Int64))
             {

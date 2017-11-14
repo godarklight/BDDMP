@@ -542,7 +542,7 @@ namespace BDDMP
                     if (HighLogic.LoadedScene == GameScenes.FLIGHT) {
                         foreach (Vessel vessel in FlightGlobals.Vessels) {
                             if (vessel.id == update.vesselOriginID) {
-                                ExplosionFX.CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, update.heat, vessel, update.direction, update.explModelPath, update.soundPath);
+                                ExplosionDetour._CreateExplosion ((vessel.transform.position + update.position), update.radius, update.power, update.heat, vessel, update.direction, update.explModelPath, update.soundPath);
                             }
                         }
                     }
