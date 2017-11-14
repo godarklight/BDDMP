@@ -10,6 +10,7 @@ using MessageStream2;
 using System.Reflection;
 
 using BDDMP.Detours;
+using BDArmory.Core.Extension;
 
 namespace BDDMP
 {
@@ -82,6 +83,14 @@ namespace BDDMP
 
             MethodInfo bfun = typeof(ExplosionFX).GetMethod("CreateExplosion");
             MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion");
+            Detourer.TryDetourFromTo(bfun, dfun);
+
+            bfun = typeof(PartExtensions).GetMethod("AddDamage");
+            dfun = typeof(DamageDetour).GetMethod("AddDamage");
+            Detourer.TryDetourFromTo(bfun, dfun);
+
+            bfun = typeof(PartExtensions).GetMethod("SetDamage");
+            dfun = typeof(DamageDetour).GetMethod("SetDamage");
             Detourer.TryDetourFromTo(bfun, dfun);
 
             //Message Registration

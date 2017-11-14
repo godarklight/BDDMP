@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Detourer.cs" />
+    <Compile Include="Detours\DamageDetour.cs" />
     <Compile Include="Detours\ExplosionDetour.cs" />
     <Compile Include="Detours\TurretDetour.cs" />
     <Compile Include="Detours\WeaponDetour.cs" />
