@@ -65,14 +65,14 @@ namespace BDDMP
 
         //WHY THE FRACK ARE THE CYLONS FRACKING WITH OUR FRACKING API
         static DMPModInterface dmpmi;// = Client.dmpClient.dmpModInterface;
-        static Client dmpcli;//= Client.dmpClient.dmpGame.vesselWorker;
+        static VesselWorker dmpvw;//= Client.dmpClient.dmpGame.vesselWorker;
 
         public BDDMPSynchronizer ()
 		{
             Debug.LogError("HIT CTOR");
             dmpmi = Client.dmpClient.dmpModInterface;
             Debug.LogError("HIT TEST");
-            dmpcli = Client.dmpClient;
+            dmpvw = Client.dmpClient.dmpGame.vesselWorker;
             Debug.LogError("HIT END");
         }
 
@@ -80,9 +80,9 @@ namespace BDDMP
 		{
 			GameObject.DontDestroyOnLoad (this);
 
-            MethodInfo bfun = typeof(ExplosionFX).GetMethod("CreateExplosion");
-            MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion");
-            Detourer.TryDetourFromTo(bfun, dfun);
+            //MethodInfo bfun = typeof(ExplosionFX).GetMethod("CreateExplosion");
+            //MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion");
+            //Detourer.TryDetourFromTo(bfun, dfun);
 
             //Message Registration
             dmpmi.RegisterRawModHandler("BDDMP:DamageHook", HandleDamageHook);
@@ -1467,22 +1467,22 @@ namespace BDDMP
 
         private bool VesselCanBeDamaged(Guid vesselID)
         {
-            if (dmpcli.dmpGame.vesselWorker.LenientVesselUpdatedInFuture(vesselID)) {
+            if (dmpvw.LenientVesselUpdatedInFuture(vesselID)) {
                 ScreenMessages.PostScreenMessage("BDArmory-DMP: Cannot damage vessel from the past!", 3f, ScreenMessageStyle.UPPER_LEFT);
             }
 
-            return !dmpcli.dmpGame.vesselWorker.LenientVesselUpdatedInFuture (vesselID);
+            return !dmpvw.LenientVesselUpdatedInFuture (vesselID);
         }
 
         private bool CanControl()
         {
             Guid vesselID = FlightGlobals.ActiveVessel.id;
-            if (dmpcli.dmpGame.vesselWorker.LenientVesselUpdatedInFuture(vesselID) || dmpcli.dmpGame.vesselWorker.isSpectating)
+            if (dmpvw.LenientVesselUpdatedInFuture(vesselID) || dmpvw.isSpectating)
             {
                 ScreenMessages.PostScreenMessage("BDArmory-DMP: Cannot control vessel from the past or while spectating!", 3f, ScreenMessageStyle.UPPER_LEFT);
             }
 
-            return !dmpcli.dmpGame.vesselWorker.LenientVesselUpdatedInFuture(vesselID) && !dmpcli.dmpGame.vesselWorker.isSpectating;
+            return !dmpvw.LenientVesselUpdatedInFuture(vesselID) && !dmpvw.isSpectating;
         }
         #endregion
 	}

@@ -8,3 +8,9 @@ DarkMultiPlayer*
 norm*.nlp
 
 BDDMP/obj/
+BDDMP/bin/Debug/*
+BDDMP/bin/Release/*
+!BDDMP/bin/Debug/BDDMP.dll
+!BDDMP/bin/Debug/BDDMP.pdb
+!BDDMP/bin/Release/BDDMP.dll
+!BDDMP/bin/Release/BDDMP.pdb
