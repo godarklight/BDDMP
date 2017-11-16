@@ -30,6 +30,9 @@ namespace BDDMP
         ObjectPool chaffPool;
         ObjectPool smokePool;
         */
+
+        //Config
+        public static bool sendTurretRot = true;
         
         //Update Entries
         static List<BDArmoryDamageUpdate> damageEntries = new List<BDArmoryDamageUpdate> ();
@@ -65,8 +68,11 @@ namespace BDDMP
         System.Object flareLock = new System.Object();
 
         //WHY THE FRACK ARE THE CYLONS FRACKING WITH OUR FRACKING API
-        static DMPModInterface dmpmi;// = Client.dmpClient.dmpModInterface;
-        static Client dmpcli;//= Client.dmpClient.dmpGame.vesselWorker;
+        public static DMPModInterface dmpmi;// = Client.dmpClient.dmpModInterface;
+        public static Client dmpcli;//= Client.dmpClient.dmpGame.vesselWorker;
+
+        //Reflection stuff
+        public static BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
 
         public BDDMPSynchronizer ()
 		{
@@ -80,17 +86,25 @@ namespace BDDMP
 		public void Awake()
 		{
 			GameObject.DontDestroyOnLoad (this);
-
-            MethodInfo bfun = typeof(ExplosionFX).GetMethod("CreateExplosion");
-            MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion");
+           
+            MethodInfo bfun = typeof(ExplosionFX).GetMethod("CreateExplosion", flags);
+            MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
 
-            bfun = typeof(PartExtensions).GetMethod("AddDamage");
-            dfun = typeof(DamageDetour).GetMethod("AddDamage");
+            bfun = typeof(PartExtensions).GetMethod("AddDamage", flags);
+            dfun = typeof(DamageDetour).GetMethod("AddDamage", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
 
-            bfun = typeof(PartExtensions).GetMethod("SetDamage");
-            dfun = typeof(DamageDetour).GetMethod("SetDamage");
+            bfun = typeof(PartExtensions).GetMethod("SetDamage", flags);
+            dfun = typeof(DamageDetour).GetMethod("SetDamage", flags);
+            Detourer.TryDetourFromTo(bfun, dfun);
+
+            //bfun = typeof(PartExtensions).GetMethod("SetDamage");
+            //dfun = typeof(DamageDetour).GetMethod("SetDamage");
+            //Detourer.TryDetourFromTo(bfun, dfun);
+
+            bfun = typeof(ModuleTurret).GetMethod("Update", flags);
+            dfun = typeof(TurretDetour).GetMethod("Update", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
 
             //Message Registration
@@ -112,9 +126,9 @@ namespace BDDMP
             HitManager.RegisterMultiHitHook(MultiDamageHook);
             HitManager.RegisterBulletHook (BulletHitFXHook);
             HitManager.RegisterExplosionHook (ExplosionFXHook);
-            //HitManager.RegisterTurretYawHook(TurretYawHook);
-            //HitManager.RegisterTurretPitchHook(TurretPitchHook);
-            //HitManager.RegisterTurretDeployHook(TurretDeployHook);
+            HitManager.RegisterTurretYawHook(TurretYawHook);
+            HitManager.RegisterTurretPitchHook(TurretPitchHook);
+            HitManager.RegisterTurretDeployHook(TurretDeployHook);
             HitManager.RegisterTracerInitHook(BulletTracerInitHook);
             HitManager.RegisterTracerHook (BulletTracerHook);
             HitManager.RegisterTracerDestroyHook(BulletTracerDestroyHook);
@@ -178,9 +192,9 @@ namespace BDDMP
                 UpdateTracerInit();
                 UpdateTracer();
                 UpdateTracerDestroy();
-                //UpdateTurretDeploy();
-                //UpdateTurretYaw ();
-                //UpdateTurretPitch ();
+                UpdateTurretDeploy();
+                UpdateTurretYaw ();
+                UpdateTurretPitch ();
                 UpdateLaser();
                 UpdateFlare();
             }
@@ -679,8 +693,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    //p.GetComponent<ModuleTurret>().yawTransform.localRotation = update.rot;
-                                    //p.GetComponent<ModuleTurret>().remoteControl = true;
+                                    p.GetComponent<ModuleTurret>().yawTransform.localRotation = update.rot;
                                     //DarkLog.Debug("YAW: Found And Changed Turret");
                                     break;
                                 }
@@ -711,8 +724,7 @@ namespace BDDMP
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    //p.GetComponent<ModuleTurret>().pitchTransform.localRotation = update.rot;
-                                    //p.GetComponent<ModuleTurret>().remoteControl = true;
+                                    p.GetComponent<ModuleTurret>().pitchTransform.localRotation = update.rot;
                                     //DarkLog.Debug("PITCH: Found And Changed Turret");
                                     break;
                                 }
