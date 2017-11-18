@@ -13,14 +13,20 @@ namespace BDDMP.Detours
     {
         public static void AddDamage(this Part p, double damage)
         {
-            Dependencies.Get<DamageService>().AddDamageToPart(p, damage);
-            HitManager.FireHitHooks(p);
+            if (HitManager.ShouldAllowDamageHooks(p.vessel.id))
+            {
+                Dependencies.Get<DamageService>().AddDamageToPart(p, damage);
+                HitManager.FireHitHooks(p);
+            }
         }
 
         public static void SetDamage(this Part p, double damage)
         {
-            Dependencies.Get<DamageService>().SetDamageToPart(p, damage);
-            HitManager.FireHitHooks(p);
+            if (HitManager.ShouldAllowDamageHooks(p.vessel.id))
+            {
+                Dependencies.Get<DamageService>().SetDamageToPart(p, damage);
+                HitManager.FireHitHooks(p);
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 
-namespace BDArmory
+namespace BDDMP
 {
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
     public class HitManager : MonoBehaviour

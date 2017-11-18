@@ -11,6 +11,7 @@ using System.Reflection;
 
 using BDDMP.Detours;
 using BDArmory.Core.Extension;
+using BDArmory.UI;
 
 namespace BDDMP
 {
@@ -24,16 +25,18 @@ namespace BDDMP
         static int tickCount = 0;
         const int updateHistoryMinutesToLive = 3;
 
-        /* TODO
+        // TODO
         bool cmPoolInited = false;
         ObjectPool flarePool;
         ObjectPool chaffPool;
         ObjectPool smokePool;
-        */
+        //*/
 
         //Config
         public static bool sendTurretRot = true;
-        
+        public static int sendTurretRotRate = 20;
+        public static bool sendTurretState = true;
+
         //Update Entries
         static List<BDArmoryDamageUpdate> damageEntries = new List<BDArmoryDamageUpdate> ();
         static List<BDArmoryBulletHitUpdate> bulletHitEntries = new List<BDArmoryBulletHitUpdate> ();
@@ -76,11 +79,8 @@ namespace BDDMP
 
         public BDDMPSynchronizer ()
 		{
-            Debug.LogError("HIT CTOR");
             dmpmi = Client.dmpClient.dmpModInterface;
-            Debug.LogError("HIT TEST");
             dmpcli = Client.dmpClient;
-            Debug.LogError("HIT END");
         }
 
 		public void Awake()
@@ -91,6 +91,10 @@ namespace BDDMP
             MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
 
+            bfun = typeof(BulletHitFX).GetMethod("CreateBulletHit", flags);
+            dfun = typeof(BulletHitDetour).GetMethod("CreateBulletHit", flags);
+            Detourer.TryDetourFromTo(bfun, dfun);
+
             bfun = typeof(PartExtensions).GetMethod("AddDamage", flags);
             dfun = typeof(DamageDetour).GetMethod("AddDamage", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
@@ -99,13 +103,21 @@ namespace BDDMP
             dfun = typeof(DamageDetour).GetMethod("SetDamage", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
 
-            //bfun = typeof(PartExtensions).GetMethod("SetDamage");
-            //dfun = typeof(DamageDetour).GetMethod("SetDamage");
-            //Detourer.TryDetourFromTo(bfun, dfun);
-
             bfun = typeof(ModuleTurret).GetMethod("Update", flags);
             dfun = typeof(TurretDetour).GetMethod("Update", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
+
+            bfun = typeof(ModuleWeapon).GetMethod("EnableWeapon");
+            dfun = typeof(WeaponDetour).GetMethod("EnableWeapon");
+            Detourer.TryDetourFromTo(bfun, dfun);
+
+            bfun = typeof(ModuleWeapon).GetMethod("DisableWeapon");
+            dfun = typeof(WeaponDetour).GetMethod("DisableWeapon");
+            Detourer.TryDetourFromTo(bfun, dfun);
+
+            //bfun = typeof(PartExtensions).GetMethod("SetDamage");
+            //dfun = typeof(DamageDetour).GetMethod("SetDamage");
+            //Detourer.TryDetourFromTo(bfun, dfun);
 
             //Message Registration
             dmpmi.RegisterRawModHandler("BDDMP:DamageHook", HandleDamageHook);
@@ -142,7 +154,6 @@ namespace BDDMP
 
         public void Update()
         {
-            /*
             #region CM Init
             if (!cmPoolInited && GameDatabase.Instance.IsReady())
             {
@@ -151,24 +162,26 @@ namespace BDDMP
                     GameObject cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMFlare/model"));
                     cm.SetActive(false);
                     cm.AddComponent<CMFlare>();
-                    flarePool = ObjectPool.CreateObjectPool(cm, 10, true, true);
+                    DontDestroyOnLoad(cm);
+                    flarePool = ObjectPool.CreateObjectPool(cm, 20, true, false);
 
                     cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMSmoke/cmSmokeModel"));
                     cm.SetActive(false);
                     cm.AddComponent<CMSmoke>();
-                    smokePool = ObjectPool.CreateObjectPool(cm, 10, true, true);
+                    DontDestroyOnLoad(cm);
+                    smokePool = ObjectPool.CreateObjectPool(cm, 20, true, false);
 
                     cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMChaff/model"));
                     cm.SetActive(false);
                     cm.AddComponent<CMChaff>();
-                    chaffPool = ObjectPool.CreateObjectPool(cm, 10, true, true);
+                    DontDestroyOnLoad(cm);
+                    chaffPool = ObjectPool.CreateObjectPool(cm, 20, true, false);
 
                     cmPoolInited = true;
                 }
                 catch (ArgumentException) { cmPoolInited = false; } //GameDB not loaded
             }
             #endregion
-            */
 
             PurgeDamageUpdates();
             PurgeBulletHitUpdates();
@@ -182,6 +195,7 @@ namespace BDDMP
             PurgeLaserUpdates();
             PurgeFlareUpdates();
 
+            CollectFlares();
             CombineFlares();
 
             UpdateDamage ();
@@ -201,7 +215,6 @@ namespace BDDMP
 
             PurgeTracers ();
         }
-
 
         #region Update Functions
 
@@ -440,6 +453,20 @@ namespace BDDMP
 
         #region Combinators
 
+        private static List<int> procdFlares = new List<int>();
+
+        private void CollectFlares()
+        {
+            foreach (CMFlare flare in BDArmorySettings.Flares)
+            {
+                if (procdFlares.Contains(flare.GetInstanceID()) || flare.getRMState()) continue;
+                procdFlares.Add(flare.GetInstanceID());
+                flares.Add(new FlareObject(flare.gameObject.transform.position - flare.sourceVessel.transform.position,
+                    flare.gameObject.transform.rotation, flare.startVelocity, flare.sourceVessel.id),
+                    Planetarium.GetUniversalTime());
+            }
+        }
+
         private void CombineFlares()
         {
             if (flares.Count > 0)
@@ -523,6 +550,7 @@ namespace BDDMP
                             {
                                 relPosition = update.position + vessel.transform.position;
                                 positionSet = true;
+                                break;
                             }
                         }
                     }
@@ -534,6 +562,7 @@ namespace BDDMP
 
 
                     if (HighLogic.LoadedScene == GameScenes.FLIGHT) {
+                        /*
                         try {
                             //BulletHitFX.CreateBulletHit (relPosition, norm, rico, false);
                             GameObject go = GameDatabase.Instance.GetModel("BDArmory/Models/bulletHit/bulletHit");
@@ -550,6 +579,8 @@ namespace BDDMP
                         } catch (Exception e) {
                             DarkLog.Debug ("BDDMP Exception while trying to spawn bullet effect " + e.Message);
                         }
+                        */
+                        BulletHitDetour._CreateBulletHit(relPosition, update.normalDirection, update.ricochet);
                     }
                     bulletHitEntriesCompleted.Add (update);
                 }
@@ -749,25 +780,25 @@ namespace BDDMP
                     {
                         if (v.id == update.vesselID)
                         {
-                            DarkLog.Debug("DEPLOY: Found Target Vessel");
+                            //DarkLog.Debug("DEPLOY: Found Target Vessel");
                             foreach (Part p in v.Parts.ToArray())
                             {
                                 if (p.craftID == update.turretID)
                                 {
-                                    /*if (update.state)
+                                    if (update.state)
                                     {
-                                        p.GetComponent<ModuleWeapon>().StopCoroutine("ShutdownRoutine");
-                                        p.GetComponent<ModuleWeapon>().StartCoroutine("StartupRoutine");
+                                        p.GetComponent<ModuleWeapon>().EnableWeapon();
+                                        //p.GetComponent<ModuleWeapon>().StopCoroutine("ShutdownRoutine");
+                                        //p.GetComponent<ModuleWeapon>().StartCoroutine("StartupRoutine");
                                     }
                                     else
                                     {
-                                        p.GetComponent<ModuleWeapon>().StopCoroutine("StartupRoutine");
-                                        p.GetComponent<ModuleWeapon>().StartCoroutine("ShutdownRoutine");
+                                        p.GetComponent<ModuleWeapon>().DisableWeapon();
+                                        //p.GetComponent<ModuleWeapon>().StopCoroutine("StartupRoutine");
+                                        //p.GetComponent<ModuleWeapon>().StartCoroutine("ShutdownRoutine");
                                     }
-                                    //p.GetComponent<ModuleWeapon>().deployLocked = true;
-                                    DarkLog.Debug("DEPLOY: Found And Changed Turret");
+                                    //DarkLog.Debug("DEPLOY: Found And Changed Turret");
                                     break;
-                                    */
                                 }
                             }
                             break;
@@ -847,12 +878,13 @@ namespace BDDMP
                         if (v.id == update.vesselID)
                         {
                             DarkLog.Debug("FLARE: Found Target Vessel");
-                            GameObject cm = (GameObject)Instantiate(GameDatabase.Instance.GetModel("BDArmory/Models/CMFlare/model"));
+                            GameObject cm = flarePool.GetPooledObject();
                             cm.transform.position = update.pos + v.transform.position;
                             cm.transform.rotation = update.rot;
-                            CMFlare cmf = cm.AddComponent<CMFlare>();
+                            CMFlare cmf = cm.GetComponent<CMFlare>();
                             cmf.startVelocity = update.vel;
                             cmf.sourceVessel = v;
+                            cmf.setRMState();
 
                             cm.SetActive(true);
                             DarkLog.Debug("FLARE: Created Flare");

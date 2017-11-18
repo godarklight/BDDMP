@@ -61,4 +61,39 @@ namespace BDDMP.Detours
             DoExplosionDamage(position, power, heat, radius, sourceVessel);
         }
     }
+
+    class BulletHitDetour : BulletHitFX
+    {
+        public new static void CreateBulletHit(Vector3 position, Vector3 normalDirection, bool ricochet)
+        {
+            HitManager.FireBulletHooks(new BulletObject(position, normalDirection, ricochet));
+            _CreateBulletHit(position, normalDirection, ricochet);
+        }
+
+        public static void _CreateBulletHit(Vector3 position, Vector3 normalDirection, bool ricochet)
+        {
+            GameObject go = GameDatabase.Instance.GetModel("BDArmory/Models/bulletHit/bulletHit");
+            GameObject newExplosion =
+                (GameObject)Instantiate(go, position, Quaternion.LookRotation(normalDirection));
+            newExplosion.SetActive(true);
+            newExplosion.AddComponent<BulletHitFX>();
+            newExplosion.GetComponent<BulletHitFX>().ricochet = ricochet;
+            IEnumerator<KSPParticleEmitter> pe = newExplosion.GetComponentsInChildren<KSPParticleEmitter>().Cast<KSPParticleEmitter>().GetEnumerator();
+            while (pe.MoveNext())
+            {
+                if (pe.Current == null) continue;
+                pe.Current.emit = true;
+
+                if (pe.Current.gameObject.name == "sparks")
+                {
+                    pe.Current.force = (4.49f * FlightGlobals.getGeeForceAtPosition(position));
+                }
+                else if (pe.Current.gameObject.name == "smoke")
+                {
+                    pe.Current.force = (1.49f * FlightGlobals.getGeeForceAtPosition(position));
+                }
+            }
+            pe.Dispose();
+        }
+    }
 }

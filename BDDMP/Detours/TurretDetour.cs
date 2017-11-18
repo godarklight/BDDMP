@@ -52,7 +52,8 @@ namespace BDDMP.Detours
                 }
             }
             //Done to reduce network load
-            if (BDDMPSynchronizer.sendTurretRot && FlightGlobals.ActiveVessel.id == this.part.vessel.id && !Client.dmpClient.dmpGame.vesselWorker.isSpectating && Time.frameCount % 20 == 0)
+            if (BDDMPSynchronizer.sendTurretRot && FlightGlobals.ActiveVessel.id == this.part.vessel.id 
+                && !Client.dmpClient.dmpGame.vesselWorker.isSpectating && Time.frameCount % BDDMPSynchronizer.sendTurretRotRate == 0)
             {
                 HitManager.FireTurretPitchHook(pitchTransform.localRotation, this.part.vessel.id, this.part.craftID);
                 HitManager.FireTurretYawHook(yawTransform.localRotation, this.part.vessel.id, this.part.craftID);
