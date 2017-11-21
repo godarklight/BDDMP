@@ -31,6 +31,9 @@ namespace BDDMP.Detours
 
     class TurretDetour : ModuleTurret
     {
+        /**
+         * CC BY-SA 2.0 as taken from BDA
+         */
         void Update()
         {
             

@@ -21,6 +21,9 @@ namespace BDDMP.Detours
             _CreateExplosion(position, radius, power, heat, sourceVessel, direction, explModelPath, soundPath);
         }
 
+        /**
+         * CC BY-SA 2.0 as taken from BDA
+         */
         public static void _CreateExplosion(Vector3 position, float radius, float power, float heat, Vessel sourceVessel,
            Vector3 direction, string explModelPath, string soundPath)
         {
@@ -70,6 +73,9 @@ namespace BDDMP.Detours
             _CreateBulletHit(position, normalDirection, ricochet);
         }
 
+        /**
+         * CC BY-SA 2.0 as taken from BDA
+         */
         public static void _CreateBulletHit(Vector3 position, Vector3 normalDirection, bool ricochet)
         {
             GameObject go = GameDatabase.Instance.GetModel("BDArmory/Models/bulletHit/bulletHit");

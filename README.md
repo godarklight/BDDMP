@@ -4,10 +4,10 @@
 
 This is an addon to [DMP](https://github.com/godarklight/DarkMultiPlayer) that enables the use of [BD Armoury's](https://github.com/BahamutoD/BDArmory) weapons in multiplayer
 
-This requires a fork of BD Armoury [Here](https://github.com/jediminer543/BDArmory) to work properly (it adds hooks to damage effects to allow for transfer)
+~~This requires a fork of BD Armoury [Here](https://github.com/jediminer543/BDArmory) to work properly (it adds hooks to damage effects to allow for transfer)~~
 
-##Current status
+Not any more, the code now uses detours
 
-The mod currently transfers all dammage, and effects (explosions + bullet impacts), but fails to transfer tracers or lasers (as these are dificult).
+## Licencing note
 
-Tracers are the main priority for development followed by lasers.
+All BDA code is CC BY-SA 2.0

@@ -18,6 +18,9 @@ namespace BDDMP.Detours
 
     class WeaponDetour : ModuleWeapon
     {
+        /**
+         * CC BY-SA 2.0 as taken from BDA
+         */
         public new void EnableWeapon()
         {
             if (weaponState == WeaponStates.Enabled || weaponState == WeaponStates.PoweringUp)
@@ -37,6 +40,9 @@ namespace BDDMP.Detours
             }
         }
 
+        /**
+         * CC BY-SA 2.0 as taken from BDA
+         */
         public new void DisableWeapon()
         {
             if (weaponState == WeaponStates.Disabled || weaponState == WeaponStates.PoweringDown)
