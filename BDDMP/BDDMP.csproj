@@ -7,7 +7,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>BDDMP</RootNamespace>
     <AssemblyName>BDDMP</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -19,7 +18,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
     <LangVersion>6</LangVersion>
@@ -33,52 +31,66 @@
     <ConsolePause>false</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>../External/Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>../External/Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="BDArmory, Version=1.0.0.39495, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\GameData\BDArmory\Plugins\BDArmory.dll</HintPath>
+      <HintPath>../External/BDArmory.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="BDArmory.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\GameData\BDArmory\Plugins\BDArmory.Core.dll</HintPath>
+      <HintPath>../External/BDArmory.Core.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DarkMultiPlayer, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\GameData\DarkMultiPlayer\Plugins\DarkMultiPlayer.dll</HintPath>
+      <HintPath>../External/DarkMultiPlayer.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DarkMultiPlayer-Common, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\GameData\DarkMultiPlayer\Plugins\DarkMultiPlayer-Common.dll</HintPath>
-    </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\GameData\DarkMultiPlayer\Plugins\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>../External/DarkMultiPlayer-Common.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="KSPAssets, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\KSP_Data\Managed\KSPAssets.dll</HintPath>
+      <HintPath>../External/KSPAssets.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MessageWriter2, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\GameData\DarkMultiPlayer\Plugins\MessageWriter2.dll</HintPath>
+      <HintPath>../External/MessageWriter2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>../External/UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Kerbal Space Program - Instance 1\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>../External/UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>../External/UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>../External/UnityEngine.AudioModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

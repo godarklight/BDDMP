@@ -8,6 +8,8 @@ This is an addon to [DMP](https://github.com/godarklight/DarkMultiPlayer) that e
 
 Not any more, the code now uses detours
 
+To compile, chuck all dependances (DLL's of DarkMultiPlayer, BDA, and KSP/Managed/) into External
+
 ## Licencing note
 
 All BDA code is CC BY-SA 2.0

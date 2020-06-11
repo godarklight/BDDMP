@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using BDArmory;
+using BDArmory.Modules;
 using BDArmory.FX;
 using BDArmory.Misc;
 using BDArmory.CounterMeasure;
+using BDArmory.Core;
 using DarkMultiPlayer;
 using MessageStream2;
 using System.Reflection;
@@ -87,7 +88,7 @@ namespace BDDMP
 		{
 			GameObject.DontDestroyOnLoad (this);
            
-            MethodInfo bfun = typeof(ExplosionFX).GetMethod("CreateExplosion", flags);
+            MethodInfo bfun = typeof(ExplosionFx).GetMethod("CreateExplosion", flags);
             MethodInfo dfun = typeof(ExplosionDetour).GetMethod("CreateExplosion", flags);
             Detourer.TryDetourFromTo(bfun, dfun);
 
@@ -457,7 +458,8 @@ namespace BDDMP
 
         private void CollectFlares()
         {
-            foreach (CMFlare flare in BDArmorySettings.Flares)
+            /*
+            foreach (CMFlare flare in BDArmorySetup.Flares)
             {
                 if (procdFlares.Contains(flare.GetInstanceID()) || flare.getRMState()) continue;
                 procdFlares.Add(flare.GetInstanceID());
@@ -465,6 +467,7 @@ namespace BDDMP
                     flare.gameObject.transform.rotation, flare.startVelocity, flare.sourceVessel.id),
                     Planetarium.GetUniversalTime());
             }
+            */
         }
 
         private void CombineFlares()
@@ -637,7 +640,7 @@ namespace BDDMP
                     light.intensity = 1;
 
                     LineRenderer lr = tracer.tracer.AddComponent<LineRenderer>();
-                    lr.SetVertexCount(2);
+                    lr.positionCount = 2;
                     lr.material = new Material(Shader.Find("KSP/Particles/Alpha Blended"));
                     lr.material.mainTexture = GameDatabase.Instance.GetTexture(update.bulletTexPath, false);
 
@@ -668,7 +671,8 @@ namespace BDDMP
                             lr.SetPosition(0, update.p1 + tracer.offset);
                             lr.SetPosition(1, update.p2 + tracer.offset);
                             lr.material.SetColor("_TintColor", update.color);
-                            lr.SetWidth(update.w1, update.w2);
+                            lr.startWidth = update.w1;
+                            lr.endWidth = update.w2;
 
                             Light light = tracer.tracer.GetComponent<Light>();
                             light.transform.position = update.p1 + tracer.offset;
@@ -868,6 +872,7 @@ namespace BDDMP
         private void UpdateFlare()
         {
             //Iterate over updates
+            /*
             foreach (BDArmoryFlareUpdate update in flareEntries)
             {
                 //Don't apply updates till they happen
@@ -894,6 +899,7 @@ namespace BDDMP
                     flareEntriesCompleted.Add(update);
                 }
             }
+            */
         }
 
         #endregion

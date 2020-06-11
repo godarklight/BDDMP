@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using BDArmory;
-using UnityEngine;
-using BDArmory.Misc;
-using BDArmory.UI;
+﻿using UnityEngine;
+using BDArmory.Modules;
 using DarkMultiPlayer;
+using BDArmory.Core;
 
 namespace BDDMP.Detours
 {
@@ -41,7 +35,7 @@ namespace BDDMP.Detours
             {
                 if (this.hasAudio())
                 {
-                    if (!BDArmorySettings.GameIsPaused && this.audioRotationRate() > 0.05f)
+                    if (this.audioRotationRate() > 0.05f)
                     {
                         if (!this.audioSource().isPlaying) this.audioSource().Play();
                     }

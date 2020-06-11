@@ -2,11 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using BDArmory.Armor;
+//using BDArmory.Armor;
 using BDArmory.Core.Extension;
 using BDArmory.FX;
 using BDArmory.Misc;
 using BDArmory.UI;
+using BDArmory.Modules;
 using KSP.UI.Screens;
 using UniLinq;
 using UnityEngine;
